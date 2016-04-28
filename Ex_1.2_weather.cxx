@@ -1,15 +1,15 @@
 double wrong_pred(double P_rain, double P_sun_r, double P_rain_r)
 {
-double P_pred = (P_rain*(1-P_rain_r))+((1-P_rain)*(1-P_sun_r));
+double P_pred = ((P_rain)*(1-P_rain_r))+((1-P_rain)*(1-P_sun_r));
 return P_pred;
 }
 
 void wrong_decision(double P_rain, double P_wrong, double P_sun_r, double P_rain_r)
 {
 double P_wet=0.;
-P_wet = ((1-P_sun_r)*P_wrong/(1-P_rain));
+P_wet = ((1-P_rain_r)*(P_rain))/(((1-P_rain_r)*P_rain)+(P_sun_r*(1-P_rain)));
 double P_useless=0.;
-P_useless = ((1-P_rain_r)*P_wrong/(P_rain));
+P_useless = ((1-P_sun_r)*(1-P_rain))/((P_rain*P_rain_r)+((1-P_sun_r)*(1-P_rain)));
 cout<<"Die Wahrscheinlichkeit nass zu werden ist: "<<P_wet<<endl;
 cout<<"Die Wahrscheinlichkeit unnötig einen Schirm mitzunehmen ist :"<<P_useless<<endl;
 }
@@ -18,11 +18,11 @@ cout<<"Die Wahrscheinlichkeit unnötig einen Schirm mitzunehmen ist :"<<P_useles
 
 void weather(){
 
-double suncity = 0.05;	//probability of rain in suncity	P(rain)
-double equalcity = 0.5;	//probability of rain in equalcity	P(rain)
-double raincity = 0.95;	//probability of rain in raincity	P(rain)
+double suncity = 0.05;		//probability of rain in suncity	P(rain)
+double equalcity = 0.5;		//probability of rain in equalcity	P(rain)
+double raincity = 0.95;		//probability of rain in raincity	P(rain)
 //P(sun)=1-P(rain)
-double sun_right = 0.9;	//sun predicted and correct		P(pred|sun)
+double sun_right = 0.9;		//sun predicted and correct		P(pred|sun)
 double rain_right = 0.8;	//rain predicted and correct		P(pred|rain)
 //P(pred) --> prediction correct
 //P(sun|pred) --> sun shines if pred is correct
@@ -45,6 +45,8 @@ cout<<"In equalcity:"<<endl;
 wrong_decision(equalcity, wrong_pred_equal, sun_right, rain_right);
 cout<<"In raincity:"<<endl;
 wrong_decision(raincity, wrong_pred_rain, sun_right, rain_right);
+
+cout << "test rechnung: " << (1-0.9)*0.05/((1-0.9)*0.05+(1-0.8)*(1-0.05)) << endl;
 }
 
 void MC_weather(int city_ID, int N)
@@ -67,8 +69,8 @@ else cout<<"wrong city, 100% rain"<<endl;
 for (int i=0; i<N; i++){
  rain = r->Rndm();	//rain<rain_prob-->it rains
  pred = r->Rndm();	//pred<rain_pred-->correct if rain
- if (rain<rain_prob && pred<rain_pred){ hist1->Fill(0); hist2->Fill(0);}
- else if (rain<rain_prob && pred>=rain_pred){ hist1->Fill(1); hist2->Fill(3);}
+ if (rain<rain_prob && pred<rain_pred){ hist1->Fill(0); hist2->Fill(0);}//regen, rergen vorhergesagt
+ else if (rain<rain_prob && pred>=rain_pred){ hist1->Fill(1); hist2->Fill(3);}//regen, 
  else if (rain>=rain_prob && pred<sun_pred){ hist1->Fill(2); hist2->Fill(0);}
  else if (rain>=rain_prob && pred>=sun_pred){ hist1->Fill(3); hist2->Fill(3);}
 }

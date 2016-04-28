@@ -1,4 +1,4 @@
-TGraphErrors* make_band(TF1& f, TMatrixD cov){
+TGraphErrors* make_band(TF1& f, TMatrixD* cov=NULL){
  double e1=f.GetParError(0);
  double e2=f.GetParError(1);
  double p1=f.GetParameter(0);
@@ -9,23 +9,23 @@ TGraphErrors* make_band(TF1& f, TMatrixD cov){
  double ye[range];
  double y[range];
  double x[range];
-// if (cov != NULL){
+ if ((cov != NULL)){
   for(int i=0; i<range; i++){
    x[i]=xmin+i;
    y[i]=p1*x[i]+p2;
-   ye[i]=sqrt(cov(0,0)+(x[i]*x[i]*(cov(1,1)))+(((cov(0,1))*x[i])+(x[i]*(cov(1,0)))));
+   ye[i]=sqrt(cov->operator()(0,0)+(x[i]*x[i]*(cov->operator()(1,1)))+(((cov->operator()(0,1))*x[i])+(x[i]*(cov->operator()(1,0)))));
    cout<<ye[i]<<endl;
    cout<<(e1*e1)+(x[i]*x[i]*e2*e2)<<sqrt((e1*e1)+(x[i]*x[i]*e2*e2))<<ye[i]<<endl;
   }
-// }
-// else{
-//  for(int i=0; i<range; i++){
-//   x[i]=xmin+i;
-//   y[i]=p1*x[i]+p2;
-//   ye[i]=sqrt((e1*e1)+(x[i]*x[i]*e2*e2));
-//   cout<<(e1*e1)+(x[i]*x[i]*e2*e2)<<sqrt((e1*e1)+(x[i]*x[i]*e2*e2))<<ye[i]<<endl;
-//  }
-// }
+ }
+ else{
+  for(int i=0; i<range; i++){
+   x[i]=xmin+i;
+   y[i]=p1*x[i]+p2;
+   ye[i]=sqrt((e1*e1)+(x[i]*x[i]*e2*e2));
+   cout<<(e1*e1)+(x[i]*x[i]*e2*e2)<<sqrt((e1*e1)+(x[i]*x[i]*e2*e2))<<ye[i]<<endl;
+  }
+ }
  TGraphErrors* g = new TGraphErrors(range, x, y, 0, ye);
  return g;
 }
@@ -68,6 +68,7 @@ gr->Draw("ALP");
 TVirtualFitter* fitrp = TVirtualFitter::GetFitter();
 Int_t nPar = fitrp->GetNumberTotalParameters();
 TMatrixD covmat(nPar,nPar, fitrp->GetCovarianceMatrix());
+TMatrixD* cov = &covmat;
 cout<<"\n\nThe Covariance Matrix is:";
 covmat.Print();
 TMatrixD cormat(covmat);
@@ -80,7 +81,7 @@ cout<<"\nThe Correlation Matrix is:";
 cormat.Print();
 cout<<covmat(0,0)<<covmat(0,1)<<covmat(1,0)<<covmat(1,1)<<endl;
 
-TGraphErrors* g = make_band(*f, covmat);
+TGraphErrors* g = make_band(*f, cov);
 g->SetFillStyle(3001);
 g->Draw("A3 SAME");
 gr->Draw("SAME");
