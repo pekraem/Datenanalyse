@@ -89,6 +89,13 @@ hist1->Draw("HIST");
 
 cout<<"Die Wahrscheinlichkeit nass zu werden ist: "<<hist1->GetBinContent(2)/N<<endl;
 cout<<"Die Wahrscheinlichkeit unnötig einen Schirm mitzunehmen ist :"<<hist1->GetBinContent(4)/N<<endl;
+cout<<"Regen richtig vorhergesagt: "<<hist1->GetBinContent(1)/N<<endl;
+cout<<"kein Regen richtig vorhergesagt: "<<hist1->GetBinContent(3)/N<<endl;
 
 cout<<"falsch Vorhergesagt: "<<hist2->GetBinContent(2)/N<<endl;
+
+double wrong = hist2->GetBinContent(2)/N;
+
+cout << "Regenschirm vergessen:_\n" << endl;
+wrong_decision(rain_prob, wrong, sun_pred,  rain_pred);
 }
