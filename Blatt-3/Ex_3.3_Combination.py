@@ -3,14 +3,14 @@ from ROOT import TMinuit,Double,Long
 import numpy as np
 from array import array as arr
 import matplotlib.pyplot as plt
-
+from numpy.linalg import inv
 
 
 # --> this is the definition of the function to minimize, here a chi^2-function
 def calcChi2(npar, mean):
     delta = np.array([[Double(m_w[0]) - mean[1]], [Double(m_w[1]) - mean[1]]])
     delta_T = delta.T
-    chi2 = np.dot(delta_T , np.dot(kor_matirx, delta))
+    chi2 = np.dot(delta_T , np.dot(kor_matirx_inv, delta))
     return chi2
 
 def fcn(npar, deriv, f, apar, iflag):
@@ -39,8 +39,9 @@ s = error_w1[3]*error_w2[3]
 t = error_w1[4]*error_w2[4]
 
 global kor_matirx
-kor_matirx = np.array([[g1, s+t], [g2, s+t]])
-
+kor_matirx = np.array([[g1, s+t], [ s+t, g2]])
+kor_matirx_inv = inv(kor_matirx)
+print kor_matirx
 
 # --> set up MINUIT
 myMinuit = TMinuit(npar)  # initialize TMinuit with maximum of npar parameters
@@ -75,4 +76,3 @@ myMinuit.mnstat(amin,edm,errdef,nvpar,nparx,icstat)
 #           1= approximative 
 #           0=not calculated
 myMinuit.mnprin(3,amin) # print-out by Minuit
-
