@@ -25,27 +25,28 @@ cor.Print()
 
 
 def fcn( npar, gin, f, par, iflag ):
-  f = chisquare(cor,mw,par)
+  f[0] = chisquare(cor,mw,par)
 
 def chisquare(cor,mw,par):
       chi2 = (mw[0]-par[0])*cor[0][0]*(mw[0]-par[0])+(mw[1]-par[0])*cor[1][1]*(mw[1]-par[0])+(mw[0]-par[0])*cor[0][1]*(mw[1]-par[0])+(mw[1]-par[0])*cor[1][0]*(mw[0]-par[0])
-      print chi2
       return chi2
     
     
 
-arglist = array('d', 1000*[0.])
-print arglist
-ierflg = array('i',100*[0])
+#arglist = array('d', 10*[0.])
+#print arglist
+#ierflg = array('i',[0])
 
-gMinuit = TMinuit(5)
-gMinuit.SetFCN(fcn)
-gMinuit.mnexcm( "SET ERR", arglist, 1, ierflg )
-mean = int((mw[0]+mw[1])/2)
-print mean
+gMin = TMinuit(1)
+gMin.SetFCN(fcn)
+#gMinuit.mnexcm( "SET ERR", arglist, 1, ierflg )
+#mean = int((mw[0]+mw[1])/2)
+#print mean
 
-gMinuit.mnparm( 0, "par1", mean, 10, 0, 0, ierflg )
+#gMinuit.mnparm( 0, "m_w", mean, 100, 79000, 81000, ierflg )
 #arglist[0] = 1
 #arglist[1] = 10
-gMinuit.mnexcm( "MIGRAD", arglist, 5, ierflg )
+#gMinuit.mnexcm( "MIGRAD", arglist, 5, ierflg )
 #gMinuit.Migrad()
+gMin.DefineParameter( 0, "m_w", 80450, 100, 79000, 81000 )
+gMin.Migrad()
