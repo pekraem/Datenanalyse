@@ -25,6 +25,7 @@ plt.title('Histogram 3.1 b') # title
 plt.show()
 print "Mean 3.1 b:"
 print np.mean(data1)
+print np.std(data1)
 
 data2=[]
 for i in range(0,N):
@@ -41,6 +42,7 @@ plt.title('Histogram 3.1 c N=5') # title
 plt.show()
 print "Mean 3.1 c N=5:"
 print np.mean(data2)
+print np.std(data2)
 
 data3=[]
 for i in range(0,N):
@@ -57,6 +59,7 @@ plt.title('Histogram 3.1 c N=10') # title
 plt.show()
 print "Mean 3.1 c N=10:"
 print np.mean(data3)
+print np.std(data3)
 
 data4=[]
 for i in range(0,N):
@@ -74,3 +77,4 @@ plt.title('Histogram 3.1 c N=100') # title
 plt.show()
 print "Mean 3.1 c N=100:"
 print np.mean(data4)
+print np.std(data4)

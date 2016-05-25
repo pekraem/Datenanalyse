@@ -46,7 +46,12 @@ gMin.SetFCN(fcn)
 #gMinuit.mnparm( 0, "m_w", mean, 100, 79000, 81000, ierflg )
 #arglist[0] = 1
 #arglist[1] = 10
+<<<<<<< HEAD:Ex_3.3_CorMeasure.py
 #gMinuit.mnexcm( "MIGRAD", arglist, 5, ierflg )
 #gMinuit.Migrad()
 gMin.DefineParameter( 0, "m_w", 80450, 100, 79000, 81000 )
 gMin.Migrad()
+=======
+gMinuit.mnexcm( "MIGRAD", arglist, 5, ierflg )
+#gMinuit.Migrad()
+>>>>>>> 6717e917370343b4a0e86a4418dbd8165fda2257:Blatt-3/Ex_3.3_CorMeasure.py
