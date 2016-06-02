@@ -8,23 +8,25 @@ from numpy.linalg import inv
 
 def drawCovEllipse(y,cov):
   ## draw coordinate system, line and center
-  h = TH1F("h", "Covariance ellipse", 100, 6, 10.5)
+
+  h = TH1F("h", "1 and 2 sigma ellipse", 100, 6, 10.5)
   h.SetMinimum(6)
   h.SetMaximum(10.5)
-  h.SetStats(False)
+  h.SetStats(false)
   h.Draw()
-  #line = TLine(6, 6, 10.5, 10.5)
-  #line.Draw()
+  line = TLine(6, 6, 10.5, 10.5)
+  line.Draw()
   dot = TPolyMarker(1)
   dot.SetPoint(0, y[0], y[1])
+  print y[0]
   dot.SetMarkerStyle(kPlus)
   dot.Draw()
   nPoints = 200
 
   # calculate the ellipse
   W =cov
-  print W
   ellipse1 = TGraph(nPoints+1)
+  ellipse2 = TGraph(nPoints+1)
   for iPhi in range(201):
     phi = iPhi * 2 * np.pi / 200.
     v = [0,0]
@@ -33,13 +35,14 @@ def drawCovEllipse(y,cov):
     sum = 0.
     for i in range(2):
       for j in range(2):
-		sum += v[i] * W[i][j] * v[j]
-    r = np.sqrt(1./sum)
+	sum += v[i] * W[i][j] * v[j]
+    r = sqrt(1./sum)
     ellipse1.SetPoint(iPhi, y[0]+r*v[0], y[1]+r*v[1])
+    ellipse2.SetPoint(iPhi, y[0]+2*r*v[0], y[1]+2*r*v[1])
   ellipse1.Draw("L")
+  ellipse2.Draw("L")
   gPad.Update()
   raw_input()
-
 
 # --> this is the definition of the function to minimize, here a chi^2-function
 def calcChi2mean(npar, mean):
