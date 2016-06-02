@@ -26,12 +26,12 @@ print sig
 
 print chi2(winners,mean)
 
-if sig[1]>=chi2(winners,mean):
+if sig[1]<=chi2(winners,mean):
   print "Significane level 1%: The hypothesis is true"
 else:
   print "Significane level 1%: The hypothesis is not true"
 
-if sig[0]>=chi2(winners,mean):
+if sig[0]<=chi2(winners,mean):
   print "Significane level 5%: The hypothesis is true"
 else:
   print "Significane level 5%: The hypothesis is not true"
