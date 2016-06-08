@@ -73,9 +73,12 @@ global kor_matrix
 kor_matrix=[[0,0,0],[0,0,0],[0,0,0]]
 for i in range(3):
   kor_matrix[i][i] = error[i]*error[i]
+  print 'error = ',error[i]
 
 global kor_matrix_inv
 kor_matrix_inv = inv(kor_matrix)
+
+#print kor_matrix_inv
 
 
 minuit = TMinuit(npar) #initialize TMinuit with a maximum of 2 params
@@ -97,5 +100,18 @@ minuit.mnparm(1, "N", vstart[1], step[1], 0,0,ierflg)
 arglist[0] = 500
 arglist[1] = 1.
 minuit.mnexcm("MIGRAD", arglist ,2,ierflg)
+print kor_matrix_inv
+m_w = [8.0, 8.5, 1.]
+
+#print kor_matirx_inv
+print '##############', npar
+
+for i in range(2):
+  for j in range(2):
+    kor_matirx_inv[i][j]+=**2*npar[1]**2
+    
+print kor_matirx_inv
+nwerte = [m_w[0]-amin,m_w[1]-amin]
+drawCovEllipse(m_w,kor_matirx_inv)
 
 drawCovEllipse(m_w,kor_matrix_inv)

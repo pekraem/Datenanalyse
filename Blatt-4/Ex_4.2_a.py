@@ -117,8 +117,14 @@ myMinuit.mnstat(amin,edm,errdef,nvpar,nparx,icstat)
 #           0=not calculated
 myMinuit.mnprin(3,amin) # print-out by Minuit
 
+#print kor_matirx_inv
+print '##############', npar
 
-
+for i in range(2):
+  for j in range(2):
+    kor_matirx_inv[i][j]+=npar[0]**2*npar[1]**2
+    
+print kor_matirx_inv
 nwerte = [m_w[0]-amin,m_w[1]-amin]
 drawCovEllipse(m_w,kor_matirx_inv)
 

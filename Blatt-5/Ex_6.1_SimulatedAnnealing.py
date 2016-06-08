@@ -30,8 +30,8 @@ def simAnnealing(a,b,c):
   #tr3 = TRandom3()
   #print tr3.GetSeed()
   
-  ##gRandom.SetSeed(0)
-  #print gRandom.GetSeed()
+  gRandom.SetSeed(0)
+  print gRandom.GetSeed()
   
   # Starting point: test the dependence of the algorithm on the initial values
   initialXvalue = 3
@@ -43,9 +43,9 @@ def simAnnealing(a,b,c):
   # The temperature scale must be in adequate relation to the scale of the function values,
   # the step size must be in adequate relation to the scale of the distance between the 
   # different local minima
-  initialTemperature = 10000
+  initialTemperature = 1000
   finalTemperature = 1
-  coolingSpeed = 1 # in percent of current temerature --> defines number of iterations
+  coolingSpeed = 0.1 # in percent of current temerature --> defines number of iterations
   stepSize = 1
 
   # Current parameters and cost
