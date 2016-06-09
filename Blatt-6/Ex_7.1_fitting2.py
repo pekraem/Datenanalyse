@@ -18,6 +18,14 @@ ey=np.array(len(data_x)*[0.5],dtype=np.float)
 ex=np.array(len(data_y)*[0],dtype=np.float)
 xmin = min(np.min(d) for d in data_x)
 xmax = max(np.max(d) for d in data_x)
+
+P_2 =TF1("P_2", "[0] + [1]*x + [2]*x**2",-1,1)
+P_3 =TF1("P_3",  "[0] + [1]*x + [2]*x**2 + [3]*x**3",-1,1)
+P_4 =TF1("P_4",  "[0] + [1]*x + [2]*x**2 + [3]*x**3 + [4]*x**4",-1,1)
+P_5 =TF1("P_5",  "[0] + [1]*x + [2]*x**2 + [3]*x**3 + [4]*x**4 + [5]*x**5",-1,1)
+P_6 =TF1("P_6",  "[0] + [1]*x + [2]*x**2 + [3]*x**3 + [4]*x**4 + [5]*x**5 + [6]*x**6",-1,1)
+P_7 =TF1("P_7",  "[0] + [1]*x + [2]*x**2 + [3]*x**3 + [4]*x**4 + [5]*x**5 + [6]*x**6 + [7]*x**7",-1,1)
+polynom = [P_2,P_3,P_4,P_5,P_6,P_7]
 L_2 = TF1("L_2", "[0] + [1]*x + [2]*0.5*(3.*x**2 - 1.)",-1,1)
 L_3 = TF1("L_3", "[0] + [1]*x + [2]*0.5*(3.*x**2 - 1.) + [3]*0.5*(5.*x**3 - 3.*x)",-1,1)
 L_4 = TF1("L_4", "[0] + [1]*x + [2]*0.5*(3.*x**2 - 1.) + [3]*0.5*(5.*x**3 - 3.*x) + [4]*0.125*(35.*x**4 - 30.*x**2 + 3.)",-1,1)
@@ -45,8 +53,8 @@ gr.Draw("AP");
 Pol=["pol1","pol2","pol3","pol4","pol5","pol6","pol7"]
 
 # Polifit
-for i in range(len(Pol)):
-  gr.Fit(Pol[i])
+for i in range(len(polynom)):
+  gr.Fit(polynom[i],"V")
   #c1.Update()
   gr.Draw('AP')
   fitrp = TVirtualFitter.GetFitter()
