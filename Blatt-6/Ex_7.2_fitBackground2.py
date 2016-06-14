@@ -9,7 +9,7 @@ sigma_x = np.array(nPoints*[0], dtype=np.float)
 sigma_y = np.array(np.sqrt(data_y), dtype=np.float)
 
 pi=np.pi
-L=TF1("L","[0]*([1]/2)/(pi*(x-[2])**2+([1]/2)**2)",0.6,2)
+L=TF1("L","[0]*([1]/2)/(pi*((x-[2])**2+([1]/2)**2))",0.6,1.2)
 Pol=TF1("Pol","[0]*x**2+[1]*x+[2]",0,3)
 
 #Fiting data with 6 parameters-------------------------------------------------------
@@ -20,11 +20,11 @@ c1=TCanvas("c1","Daten",200,10,700,500) #make nice Canvas
 c1.SetGrid()
 
 gr=TGraphErrors(nPoints,data_x,data_y,sigma_x,sigma_y)
-gr.SetTitle("TGraphErrors mit Fit")
+gr.SetTitle("6 Parameter Fit")
 gr.Draw("AP");
 
 
-Tmp=TF1("Tmp","[0]*x**2+[1]*x+[2]+[3]*([4]/2)/(pi*(x-[5])**2+([4]/2)**2)",0,3)
+Tmp=TF1("Tmp","[0]*x**2+[1]*x+[2]+[3]*([4]/2)/(3.141*((x-[5])**2+([4]/2)**2))",0,3)
 Tmp.SetParameter(3,90)
 Tmp.SetParameter(4,0.9)
 Tmp.SetParameter(5,0.1)
@@ -36,7 +36,13 @@ nPar = fitrp.GetNumberTotalParameters()
 covmat = TMatrixD(nPar, nPar,fitrp.GetCovarianceMatrix())
 print('The Covariance Matrix is: ')
 covmat.Print()
-#raw_input('Press <ret> to continue -> ')
+cormat = TMatrixD(covmat)
+for i in range(nPar):
+  for j in range(nPar):
+    cormat[i][j] = cormat[i][j] / (np.sqrt(covmat[i][i]) * np.sqrt(covmat[j][j]))
+print('The Correlation Matrix is: ')
+cormat.Print()
+raw_input('Press <ret> to continue -> ')
 
 #Extracting background -----------------------------------
 
@@ -49,7 +55,7 @@ for i in data_x:
     new_data_x.append(i)
     new_data_y.append(data_y[j])
     new_nPoints +=1
-  elif i>=2:
+  elif i>=1.2:
     new_data_x.append(i)
     new_data_y.append(data_y[j])
     new_nPoints+=1
@@ -70,6 +76,17 @@ gr=TGraphErrors(new_nPoints,new_data_x,new_data_y,new_sigma_x,new_sigma_y)
 gr.SetTitle("Background Fit")
 gr.Draw("AP");
 gr.Fit(Pol)
+fitrp = TVirtualFitter.GetFitter()
+nPar = fitrp.GetNumberTotalParameters()
+covmat = TMatrixD(nPar, nPar,fitrp.GetCovarianceMatrix())
+print('The Covariance Matrix is: ')
+covmat.Print()
+cormat = TMatrixD(covmat)
+for i in range(nPar):
+  for j in range(nPar):
+    cormat[i][j] = cormat[i][j] / (np.sqrt(covmat[i][i]) * np.sqrt(covmat[j][j]))
+print('The Correlation Matrix is: ')
+cormat.Print()
 #c1.Update()
 gr.Draw('AP')
 #raw_input('Press <ret> to continue -> ')
@@ -80,13 +97,13 @@ c=Pol.GetParameter(2)
 def background(x,a,b,c):
   return a*x**2+b*x+c
 
-#Fitting peak without beakground ----------------------------
+#Fitting peak without beakground ------------------
 new_data_x1=[]
 new_data_y1=[]
 new_nPoints1=0
 j=0
 for i in data_x:
-  if i>0.6 and i<2:
+  if i>0.6 and i<1.2:
     new_data_x1.append(i)
     new_data_y1.append(data_y[j]-background(i,a,b,c))
     new_nPoints1 +=1
@@ -96,8 +113,8 @@ new_data_x1=np.array(new_data_x1,dtype=np.float)
 new_data_y1=np.array(new_data_y1,dtype=np.float)
 new_sigma_x1 = np.array(new_nPoints*[0], dtype=np.float)
 new_sigma_y1 = np.array(np.sqrt(np.abs(new_data_y1)), dtype=np.float)
-print new_data_x1
-print new_data_y1
+#print new_data_x1
+#print new_data_y1
 
 gStyle.SetOptFit(111)  # superimpose fit results
 
@@ -113,5 +130,16 @@ L.SetParameter(2,1)
 gr.Fit(L)
 #c1.Update()
 gr.Draw('AP')
+fitrp = TVirtualFitter.GetFitter()
+nPar = fitrp.GetNumberTotalParameters()
+covmat = TMatrixD(nPar, nPar,fitrp.GetCovarianceMatrix())
+print('The Covariance Matrix is: ')
+covmat.Print()
+cormat = TMatrixD(covmat)
+for i in range(nPar):
+  for j in range(nPar):
+    cormat[i][j] = cormat[i][j] / (np.sqrt(covmat[i][i]) * np.sqrt(covmat[j][j]))
+print('The Correlation Matrix is: ')
+cormat.Print()
 raw_input('Press <ret> to continue -> ')
 

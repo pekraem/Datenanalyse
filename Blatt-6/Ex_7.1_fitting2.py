@@ -55,25 +55,38 @@ Pol=["pol1","pol2","pol3","pol4","pol5","pol6","pol7"]
 # Polifit
 for i in range(len(polynom)):
   gr.Fit(polynom[i],"V")
-  #c1.Update()
+  c1.Update()
   gr.Draw('AP')
   fitrp = TVirtualFitter.GetFitter()
   nPar = fitrp.GetNumberTotalParameters()
   covmat = TMatrixD(nPar, nPar,fitrp.GetCovarianceMatrix())
   print('The Covariance Matrix is: ')
   covmat.Print()
+  cormat = TMatrixD(covmat)
+  for i in range(nPar):
+    for j in range(nPar):
+      cormat[i][j] = cormat[i][j] / (np.sqrt(covmat[i][i]) * np.sqrt(covmat[j][j]))
+  print('The Correlation Matrix is: ')
+  cormat.Print()
   raw_input('Press <ret> to continue -> ')
 
 #Legendre Poly
 for i in range(len(legendre)):
   gr.Fit(legendre[i],"V")
-  #c1.Update()
+  
+  c1.Update()
   gr.Draw('AP')
   fitrp = TVirtualFitter.GetFitter()
   nPar = fitrp.GetNumberTotalParameters()
   covmat = TMatrixD(nPar, nPar,fitrp.GetCovarianceMatrix())
   print('The Covariance Matrix is: ')
   covmat.Print()
+  cormat = TMatrixD(covmat)
+  for i in range(nPar):
+    for j in range(nPar):
+      cormat[i][j] = cormat[i][j] / (np.sqrt(covmat[i][i]) * np.sqrt(covmat[j][j]))
+  print('The Correlation Matrix is: ')
+  cormat.Print()
   raw_input('Press <ret> to continue -> ')
 # request user action before ending (and deleting graphics window)
 raw_input('Press <ret> to end -> ')
