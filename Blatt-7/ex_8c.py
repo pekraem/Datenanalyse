@@ -15,47 +15,33 @@ R = np.array([[0.7,0.3,0.3,0.3,0.3,0.3,0.3],[0.3,0.4,0.3,0.3,0.3,0.3,0.3],[0.3,0
 #R[0][0] = 0.7
 #R[6][6] = 0.7
 
-print R
+
 R_inv = inv(R)
 unfold = np.dot(R_inv, observed)
 #------------------------------------------
-
-print type(R_inv)
-
-
-
 #c part
 #digonalize R
 lambda_value, U = eig(R)
-print U[:,0]
-print U[:,1]
-print U[:,2]
-print U[:,3]
-print U[:,4]
-print U[:,5]
-print U[:,6]
-for i in range(7):
-  
-print U
 R_diag = np.dot(inv(U), np.dot(R, U)) #??? Warum nicht wie auf Blatt??
 
 #construct g_diag and multi with 1/lambda_value
-g_diag = np.dot(inv(U),observed)
+g_diag = np.dot(inv(U), observed)
 lambda_inv = 1/lambda_value
-
 for i in range(7):
   g_diag[i] = g_diag[i] * lambda_inv[i]
 #g_diag = np.multiply(g_diag, 1/lambda_value)
 
-
 # set lambda_reg and set elements of g_diag
-lambda_reg = 0.2 #change it for c
+lambda_reg = 0 #change it for c
 for i in range(7):
   if lambda_value[i] < lambda_reg:
     g_diag[i] = 0
 
 #calculate unfolded result
-unfold = np.dot(U,g_diag)
+unfold_new = np.dot(U,g_diag)
+
+print unfold_new
+print unfold
 
 
 
