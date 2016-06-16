@@ -9,7 +9,7 @@ for i in range(7):
     for j in range(7):
         if i == j:
             R[i][j] = 0.4
-        else:
+        elif i==j+1 or i==j-1:
             R[i][j] = 0.3
 R[0][0] = 0.7
 R[6][6] = 0.7
