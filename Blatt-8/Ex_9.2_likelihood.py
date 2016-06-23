@@ -14,7 +14,7 @@ def p_likeli_cl(x,par):
   fac=1
   for n in range(int(round(par[0]))):
     fac*=(n+1)
-  return (-2*par[1]-(TMath.Log(((x[0]**par[0])*TMath.Exp(-x[0]))/fac)))
+  return (-par[1]-2*(TMath.Log(((x[0]**par[0])*TMath.Exp(-x[0]))/fac)))
 
 log_likeli = TF1('log_likeli',p_likeli,0,10,1)
 
@@ -22,11 +22,19 @@ c = TCanvas('c','c',800,600)
 
 log_likeli.SetParameter(0,3)
 log_likeli.Draw()
-
+raw_input()
 
 c.SaveAs('log_likelihood.pdf')
 m=log_likeli.GetMinimum()
 xm=log_likeli.GetX(m,0,10)
+
+minlimit_6 = log_likeli.GetX(m+1.,0,3)
+maxlimit_6 = log_likeli.GetX(m+1.,3,15)
+print minlimit_6, maxlimit_6
+
+minlimit_9 = log_likeli.GetX(m+1.28,0,3)
+maxlimit_9 = log_likeli.GetX(m+1.28,3,15)
+print minlimit_9, maxlimit_9
 
 print m, xm
 
