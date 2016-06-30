@@ -17,6 +17,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib
 matplotlib.rcParams['backend']='TkAgg'
 from ROOT import *
+import math
 
 from matplotlib import pyplot as plt
 
@@ -51,6 +52,20 @@ bckgrd = ~signal
 #             (see the numpy documentation for further examples)
 
 ### ------- helper functions ----------------------------------
+# creates List with varpairs for 2d-plotting
+def permuteVars(variables):
+	combs = itertools.combinations(variables, 2)
+	varcombs = list(combs)
+	indexcombs = []
+	for pair in varcombs:
+		indexpair = []
+		for var in pair:
+			indexpair.append(variables.index(var))
+		indexcombs.append(indexpair)
+	return varcombs, indexcombs
+
+
+
 class Plotter(object):
     """
         class to display and evaluate the performance of a test-statistic 
@@ -107,7 +122,8 @@ class Plotter(object):
         ns, binss, _ = plt.hist(map(classifier.evaluate, self.signal_data), 
           color='r', alpha=0.5, label='Signal' )
         nb, binsb, _ = plt.hist( map(classifier.evaluate, self.bckgrd_data), 
-           color='b', alpha=0.5, label='Background' ) 
+           color='b', alpha=0.5, label='Background' )
+	plt.legend()
         plt.title("test statistic")
         plt.show()
 
@@ -182,6 +198,81 @@ class CutClassifier(object):
            c+=(x[i] < (self.signal_mean[i] + self.bckgrd_mean[i])/2.)     
         return c
 
+class LogLikeliClassifier(object):
+    """
+        template implementation of a Classifier Class
+    """
+    def fit(self, signal_data, bckgrd_data):
+        """ 
+            set up classifier ("training")
+        """
+    # some examples of what might be useful:
+      # 1. signal and background histograms with same binning
+        _, self.edges = np.histogramdd(np.vstack([signal_data, bckgrd_data]), bins=10)
+        self.signal_hist, _ = np.histogramdd(signal_data, bins=self.edges)
+        self.bckgrd_hist, _ = np.histogramdd(bckgrd_data, bins=self.edges)
+
+      # 2. mean and covariance matrix 
+        self.signal_mean = np.mean(signal_data, axis=0)
+        self.signal_cov = np.cov(signal_data.T)
+        self.bckgrd_mean = np.mean(bckgrd_data, axis=0)
+        self.bckgrd_cov = np.cov(bckgrd_data.T)
+        
+      # 3. print stuff
+        print 'signal_mean = ', self.signal_mean
+        print 'background_mean = ', self.bckgrd_mean
+        #self.signal_cov.print()
+        #self.bckgrd_cov.print()
+        
+      # 4. create Histos with Gaussian distributions
+	#for varpair in varpairs:
+	  #c = TCanvas("c","c",800,600)
+	nbins = 5  
+	minx=min(data[:,0])
+	maxx=max(data[:,0])
+	miny=min(data[:,1])
+	maxy=max(data[:,1])
+	#if varpair[0]!=varpair[1]:
+	signal2d = TH2F("signal2d","",nbins,minx,maxx,nbins,miny,maxy)
+	background2d = TH2F("signal2d","",nbins,minx,maxx,nbins,miny,maxy)
+	xs, ys = np.random.multivariate_normal(self.signal_mean, self.signal_cov, 5000).T
+	xb, yb = np.random.multivariate_normal(self.bckgrd_mean, self.bckgrd_cov, 5000).T
+	for x1,y1,x2,y2 in zip(xs,ys,xb,yb):
+	  signal2d.Fill(x1,y1)
+	  background2d.Fill(x2,y2)
+	hist2dges = signal2d.Clone()
+	hist2dges.Add(background2d)
+	ratio = signal2d.Clone()
+	ratio.Divide(background2d)
+	ratio.Draw("colz")
+	self.clf=ratio
+	  #c.Print("../../Ex_10-2_hist2d_setosa_prob.pdf")
+	  #c.Close()
+	#c.Print("../../Ex_10-2_hist2d_setosa_prob.pdf]")
+        self.signal_distribution = np.random.multivariate_normal(self.signal_mean, self.signal_cov, 5000).T
+        self.bckgrd_distribution = np.random.multivariate_normal(self.bckgrd_mean, self.bckgrd_cov, 5000).T
+        
+
+    def evaluate(self,x):
+      #print x[0],x[1]
+      #print 'Bin = ',self.clf.FindBin(x[0],x[1])
+      if self.clf == 0:
+	print 'Fit Classifier first!'
+	return 0
+      else:
+	binx = self.clf.GetXaxis().FindBin(x[0])
+	biny = self.clf.GetYaxis().FindBin(x[1])
+	bin = self.clf.GetBin(binx,biny,0)
+	if bin not in bins:
+	  bins.append(bin)
+	val = self.clf.GetBinContent(bin)
+	if val!=0:
+	  print math.log(val)
+	  return math.log(val)
+	else:
+	  print -9
+	  return -9
+
 class LikelihoodClassifier(object):
     """
         template implementation of a Classifier Class
@@ -253,7 +344,7 @@ def Exercise_1():
     for plot in plotlist:
       pdf.savefig(plot)
   
-
+bins=[]
 #-----------------------------------------------------------------
 class ROOT_Likelihood:
   #def __init__(self, signal_data, bckgrd_data):
@@ -262,30 +353,29 @@ class ROOT_Likelihood:
         #self.data = np.vstack([signal_data, bckgrd_data])
         #self.clf = 0
 
-  def fit(self):
+  def fit(self,varpairs):
     signal2d = TH2F("signal2d","",20,0,10,20,0,10)
     c = TCanvas("c","c",800,600)
     #c.Print("../../Ex_10-2_hist2d_setosa_prob.pdf[")
     gStyle.SetOptStat(0)
     c.Close()
     nvar=4
-    nbins=5
+    nbins=4
 
-    for i in range(nvar):
-      for j in range(nvar):
+    for varpair in varpairs:
 	c = TCanvas("c","c",800,600)
-	minx=min(data[:,i])
-	maxx=max(data[:,i])
-	miny=min(data[:,j])
-	maxy=max(data[:,j])
-	if j!=i:
+	minx=min(data[:,varpair[0]])
+	maxx=max(data[:,varpair[0]])
+	miny=min(data[:,varpair[1]])
+	maxy=max(data[:,varpair[1]])
+	if varpair[0]!=varpair[1]:
 	  signal2d = TH2F("signal2d","",nbins,minx,maxx,nbins,miny,maxy)
 	  background2d = TH2F("signal2d","",nbins,minx,maxx,nbins,miny,maxy)
 	  for event in data:
 	    if event[4]==2:
-	      signal2d.Fill(event[i],event[j])
+	      signal2d.Fill(event[varpair[0]],event[varpair[1]])
 	    else:
-	      background2d.Fill(event[i],event[j])  
+	      background2d.Fill(event[varpair[0]],event[varpair[1]])  
 	  hist2dges = signal2d.Clone()
 	  hist2dges.Add(background2d)
 	  ratio = signal2d.Clone()
@@ -297,16 +387,19 @@ class ROOT_Likelihood:
     #c.Print("../../Ex_10-2_hist2d_setosa_prob.pdf]")
     
   def evaluate(self,x):
-    print x[0],x[1]
-    print 'Bin = ',self.clf.FindBin(x[0],x[1])
+    #print x[0],x[1]
+    #print 'Bin = ',self.clf.FindBin(x[0],x[1])
     if self.clf == 0:
       print 'Fit Classifier first!'
       return 0
     else:
-      if self.clf.GetBinContent(self.clf.FindBin(x[0],x[1]))!=0.0:
-	print self.clf.GetBinContent(self.clf.FindBin(x[0],x[1]))
-      print self.clf.GetEntries()
-      return self.clf.GetBinContent(self.clf.FindBin(x[0],x[1]))
+      binx = self.clf.GetXaxis().FindBin(x[0])
+      biny = self.clf.GetYaxis().FindBin(x[1])
+      bin = self.clf.GetBin(binx,biny,0)
+      if bin not in bins:
+	bins.append(bin)
+      print self.clf.GetBinContent(bin)
+      return self.clf.GetBinContent(bin)
 
     
 #Exercise_2_ROOT()    
@@ -327,8 +420,8 @@ class ROOT_Likelihood:
 ndim = 2
 
 # initialise Classifier with training data
-cut = ROOT_Likelihood()
-cut.fit()
+cut = LogLikeliClassifier()
+cut.fit(data[signal, :ndim], data[bckgrd, :ndim])
 
 # initialize Plotter Class
 plotter = Plotter(data[signal, :ndim], data[bckgrd, :ndim])
