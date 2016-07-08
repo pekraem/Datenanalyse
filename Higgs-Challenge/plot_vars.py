@@ -30,28 +30,75 @@ for ls in Ls:
 #create canvas and open plotfile  
 c=ROOT.TCanvas("c","c",800,600)
 c.Print("../../varhistos.pdf[")
-c.Close()
+#c.Close()
+
+histos_s=[]
+histos_b=[]
 
 #print histos
 for ls, lb in zip(Ls, Lb):
   if ls.GetName()==lb.GetName():
-    c=ROOT.TCanvas("c","c",800,600)
+    #c=ROOT.TCanvas("c","c",800,600)
     
-    print ls.GetName(), lb.GetName()
-    S.Draw(ls.GetName()+">>hs","","HIST")
-    B.Draw(lb.GetName()+">>hb","","HIST SAME")
+    #print ls.GetName(), lb.GetName()
+    S.Draw(ls.GetName()+">>hists()")#,"","HIST SAME")
+    B.Draw(lb.GetName()+">>histb()")#,"","HIST SAME")
     
-    hs = ROOT.gROOT.FindObject("hs")
-    hb = ROOT.gROOT.FindObject("hb")
+    minxs = ROOT.gROOT.FindObject("hists").GetXaxis().GetXmin()
+    minxb = ROOT.gROOT.FindObject("histb").GetXaxis().GetXmin()
+    minx = min(minxs,minxb)
+    print 'minx = ',minx
+    
+    maxxs = ROOT.gROOT.FindObject("hists").GetXaxis().GetXmax()
+    maxxb = ROOT.gROOT.FindObject("histb").GetXaxis().GetXmax()
+    maxx = max(maxxs, maxxb)
+    print 'maxx = ',maxx
+    
+    maxys = ROOT.gROOT.FindObject("hists").GetMaximum()
+    maxyb = ROOT.gROOT.FindObject("histb").GetMaximum()
+    maxy = max(maxys, maxyb)
+    print 'maxy = ',maxy
+    
+    h = ROOT.TH1F("h","h",100,minx,maxx)
+    h.GetYaxis().SetRange(0,int(maxy))
+    h.Draw()
+
+    hs = ROOT.gROOT.FindObject("hists")
+    hb = ROOT.gROOT.FindObject("histb")
+    histos_s.append(hs.Clone())
+    histos_b.append(hb.Clone())
+    histos_s[-1]
     hs.SetLineColor(ROOT.kRed)
     hb.SetLineColor(ROOT.kBlue)
-    hs.SetTitle(ls.GetName())    
-    hs.Draw("HISTO")
-    hb.Draw("HISTOSAME")    
+    hs.SetTitle(ls.GetName())
+    #hs.GetXaxis().SetRange(int(minx), int(maxx))
+    #hb.GetXaxis().SetRange(int(minx), int(maxx))
+    #hs.GetYaxis().SetRange(0,int(maxy))
+    #hb.GetYaxis().SetRange(0,int(maxy))
+    #c.Close()
+    #c=ROOT.TCanvas("c","c",800,600)
+    hs.Draw("SAME")
+    hb.Draw("SAME")    
     c.Update()
-    c.Print("../../varhistos.pdf[")
-    c.Close()
-    
-c=ROOT.TCanvas("c","c",800,600)    
+    ROOT.gPad.Modified()
+    c.Print("../../varhistos.pdf")
+    #c.Close()
+    del h
+
+#c=ROOT.TCanvas("c","c",800,600)    
 c.Print("../../varhistos.pdf]")
 c.Close()
+
+
+c=ROOT.TCanvas("c","c",800,600)
+c.Print("../../variables.pdf[")
+
+for s, b in zip(histos_s,histos_b):
+  s.SetLineColor(ROOT.kRed)
+  s.Draw()
+  b.SetLineColor(ROOT.kBlue)
+  b.Draw("SAME")
+  c.Update()
+  c.Print("../../variables.pdf")
+c.Print("../../variables.pdf]")  
+  
