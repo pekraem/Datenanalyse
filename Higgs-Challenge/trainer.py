@@ -17,20 +17,19 @@ class Trainer:
         self.best_variables=variables
         self.variables_to_try=variables_to_try
         self.verbose=verbose
-
         self.ntrainings=0
-        self.verbose=verbose
         self.stopwatch=ROOT.TStopwatch()
         self.weightfile='weights/weights.xml'
-        weightpath='/'.join((self.weightfile.split('/'))[:-1])
+        weightpath='../../'.join((self.weightfile.split('/'))[:-1])
         if not os.path.exists( weightpath ):
             os.makedirs(weightpath)
-        self.rootfile='outfile/autotrain.root'
-        outfilepath='/'.join((self.rootfile.split('/'))[:-1])
+        self.outpath='../../outfile/'
+        self.rootfile='autotrain.root'
+        outfilepath='/'.join(((self.outpath+self.rootfile).split('/'))[:-1])
         if not os.path.exists( outfilepath ):
             os.makedirs(outfilepath)
-
-        self.treename='MVATree'
+        self.streename='MVATree'
+        self.btreename='MVATree'
         self.weightexpression='1'
         self.equalnumevents=True
         self.selection=''
@@ -66,8 +65,11 @@ class Trainer:
     def setWeightExpression(self, exp):
         self.weightexpression=exp
 
-    def setTreeName(self, treename):
-        self.treename=treename
+    def setSTreeName(self, treename):
+        self.streename=treename
+        
+    def setBTreeName(self, treename):
+        self.btreename=treename
 
     def setReasonableDefaults(self):
         self.setBDTOption('MaxDepth=2')
@@ -86,7 +88,7 @@ class Trainer:
             self.setFactoryOption('Transformations=I')
 
     def showGui(self):
-        ROOT.gROOT.SetMacroPath( "./tmvascripts" )
+        ROOT.gROOT.SetMacroPath( "../../" )
         ROOT.gROOT.Macro       ( "./TMVAlogon.C" )    
         ROOT.gROOT.LoadMacro   ( "./TMVAGui.C" )
 
@@ -99,7 +101,7 @@ class Trainer:
         if not hasattr(self, 'signal_train') or not hasattr(self, 'signal_test') or not hasattr(self, 'background_train')  or not hasattr(self, 'background_test'):
             print 'set training and test samples first'
             return
-        fout = ROOT.TFile(self.rootfile,"RECREATE")
+        fout = ROOT.TFile(self.outpath+self.rootfile,"RECREATE")
         # use given options and trainer defaults if an options is not specified
         newbdtoptions=replaceOptions(bdtoptions_,self.bdtoptions)
         newfactoryoptions=replaceOptions(factoryoptions_,self.factoryoptions)
@@ -113,21 +115,21 @@ class Trainer:
         # add signal and background trees
         inputS = ROOT.TFile( self.signal_train.path )
         inputB = ROOT.TFile( self.background_train.path )          
-        treeS     = inputS.Get(self.treename)
-        treeB = inputB.Get(self.treename)
-
-        #inputS_test = ROOT.TFile( self.signal_test.path )
-        #inputB_test = ROOT.TFile( self.background_test.path )          
-        #treeS_test     = inputS_test.Get(self.treename)
-        #treeB_test = inputB_test.Get(self.treename)
-
+        treeS = inputS.Get(self.streename)
+        treeB = inputB.Get(self.btreename)
+        
+        inputS_test = ROOT.TFile( self.signal_test.path )
+        inputB_test = ROOT.TFile( self.background_test.path )          
+        treeS_test = inputS_test.Get(self.streename)
+        treeB_test = inputB_test.Get(self.btreename)
+        
         # use equal weights for signal and bkg
         signalWeight     = 1.
         backgroundWeight = 1.
         factory.AddSignalTree    ( treeS, signalWeight )
         factory.AddBackgroundTree( treeB, backgroundWeight)
-        #factory.AddSignalTree    ( treeS_test, signalWeight,ROOT.TMVA.Types.kTesting )
-        #factory.AddBackgroundTree( treeB_test, backgroundWeight,ROOT.TMVA.Types.kTesting)
+        factory.AddSignalTree    ( treeS_test, signalWeight,ROOT.TMVA.Types.kTesting )
+        factory.AddBackgroundTree( treeB_test, backgroundWeight,ROOT.TMVA.Types.kTesting)
         factory.SetWeightExpression(self.weightexpression)
         # make cuts
         mycuts = ROOT.TCut(self.selection)
@@ -153,7 +155,7 @@ class Trainer:
         #call(['cp',self.rootfile,movedfile])
 
     def evaluateLastTraining(self):
-        f = ROOT.TFile(self.rootfile)
+        f = ROOT.TFile(self.outpath+self.rootfile)
     
         histoS = f.FindObjectAny('MVA_BDTG_S')
         histoB = f.FindObjectAny('MVA_BDTG_B')

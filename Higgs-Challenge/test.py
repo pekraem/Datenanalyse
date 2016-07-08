@@ -5,90 +5,68 @@ from plotutils import *
 from mvautils import *
 #from interpol_vars import *
 
-
-variables=[#"BDT_common5_input_avg_dr_tagged_jets",
-	   #"BDT_common5_input_sphericity",
-	   #"BDT_common5_input_third_highest_btag",
-	   "BDT_common5_input_h3",
-	   #"BDT_common5_input_HT",
-	   "BDT_common5_input_fifth_highest_CSV",
-	   #"BDT_common5_input_fourth_highest_btag",
-	   #"Reco_Deta_Fn_best_TTBBLikelihood",
-	   #"Reco_Higgs_M_best_TTLikelihood_comb",
-	   "Reco_LikelihoodRatio_best_Likelihood",
-	   #"BDT_common5_input_avg_btag_disc_btags",
-	   "BDT_common5_input_pt_all_jets_over_E_all_jets",
-	   #"BDT_common5_input_all_sum_pt_with_met",
-	   #"BDT_common5_input_aplanarity",
-	   "BDT_common5_input_dr_between_lep_and_closest_jet",
-	   #"BDT_common5_input_best_higgs_mass",
-	   #"BDT_common5_input_fourth_jet_pt",
-	   #"BDT_common5_input_min_dr_tagged_jets",
-	   #"BDT_common5_input_second_highest_btag",
-	   #"Evt_Deta_JetsAverage",
-	   #"BDT_common5_input_third_jet_pt",
-	   "BDT_common5_input_closest_tagged_dijet_mass",
-	   "BDT_common5_input_tagged_dijet_mass_closest_to_125",
-	   #"Reco_Deta_TopHad_BB_best_TTBBLikelihood",
-	   #"Reco_Deta_TopLep_BB_best_TTBBLikelihood",
-	   #"Reco_LikelihoodTimesMERatio_best_Likelihood",
-	   #"Reco_LikelihoodTimesMERatio_best_LikelihoodTimesME",
-	   "Reco_MERatio_best_TTLikelihood_comb",
-	   #"Reco_Sum_LikelihoodTimesMERatio",
-	   #"Evt_4b3bLikelihoodRatio",
-	   "Evt_4b2bLikelihoodRatio"
+#define variables, commend out unuseful ones
+variables=["DER_mass_MMC",
+	   "DER_mass_transverse_met_lep",
+	   "DER_mass_vis",
+	   "DER_pt_h",
+           "DER_deltaeta_jet_jet",
+           "DER_mass_jet_jet",
+           "DER_prodeta_jet_jet",
+           "DER_deltar_tau_lep",
+           "DER_pt_tot",
+           "DER_sum_pt",
+           "DER_pt_ratio_lep_tau",
+           "DER_met_phi_centrality",
+           "DER_lep_eta_centrality",
+           "PRI_tau_pt",
+           "PRI_tau_eta",
+           "PRI_tau_phi",
+           "PRI_lep_pt",
+           "PRI_lep_eta",
+           "PRI_lep_phi",
+           "PRI_met",
+           "PRI_met_phi",
+           "PRI_met_sumet",
+           "PRI_jet_num",
+           "PRI_jet_leading_pt",
+           "PRI_jet_leading_eta",
+           "PRI_jet_leading_phi",
+           "PRI_jet_subleading_pt",
+           "PRI_jet_subleading_eta",
+           "PRI_jet_subleading_phi",
+           "PRI_jet_all_pt"
 ]
 
-addtional_variables=["BDTOhio_v2_input_h0",
-                     "BDTOhio_v2_input_h1"
-                     ]
+#needed for trainer class
+addtional_variables=[]
 
 #samples have a name, a color, a path, and a selection (not implemented yet for training)
 #only the path is really relevant atm
 cat='6j4t'
-signal_test=Sample('t#bar{t}H test',ROOT.kBlue,'/nfs/dust/cms/user/pkraemer/trees/ttH_nominal.root','') 
-signal_train=Sample('t#bar{t}H training',ROOT.kGreen,'/nfs/dust/cms/user/pkraemer/trees/ttH_nominal.root','')
-background_test=Sample('t#bar{t} test',ROOT.kRed+1,'/nfs/dust/cms/user/pkraemer/trees/ttbar_nominal.root','')
-background_train=Sample('t#bar{t} training',ROOT.kRed-1,'/nfs/dust/cms/user/pkraemer/trees/ttbar_nominal.root','')
-trainer=Trainer(variables,addtional_variables)
 
+#change path if necessary
+signal_test=Sample('t#bar{t}H test',ROOT.kBlue,"../../atlas-higgs-challenge-2014-v2.root",'') 
+signal_train=Sample('t#bar{t}H training',ROOT.kGreen,"../../atlas-higgs-challenge-2014-v2_part.root",'')
+background_test=Sample('t#bar{t} test',ROOT.kRed+1,"../../atlas-higgs-challenge-2014-v2.root",'')
+background_train=Sample('t#bar{t} training',ROOT.kRed-1,"../../atlas-higgs-challenge-2014-v2_part.root",'')
+
+#create trainer and set trainer options
+trainer=Trainer(variables,addtional_variables)
 trainer.addSamples(signal_train,background_train,signal_test,background_test) #add the sample defined above
-trainer.setTreeName('MVATree') # name of tree in files
+trainer.setSTreeName('signal') # name of signaltree in files
+trainer.setBTreeName('background') # name of backgroundtree in files
 trainer.setReasonableDefaults() # set some configurations to reasonable values
 trainer.setEqualNumEvents(True) # reweight events so that integral in training and testsample is the same
 trainer.useTransformations(True) # faster this way
 trainer.setVerbose(True) # no output during BDT training and testing
 trainer.setWeightExpression('Weight')
-trainer.setSelection('N_Jets>=6&&N_BTagsM>=4') # selection for category (not necessary if trees are split)
 
-#trainer.removeWorstUntil(12) # removes worst variable until only 10 are left 
-#trainer.optimizeOption('NTrees') # optimizies the number of trees by trying more and less trees # you need to reoptimize ntrees depending on the variables and on other parameters
-#trainer.optimizeOption('Shrinkage')
-#trainer.optimizeOption('nCuts')
-#trainer.addBestUntil(13) # add best variables until 12 are used
-#trainer.optimizeOption('NTrees')
-#trainer.optimizeOption('Shrinkage')
-#trainer.optimizeOption('nCuts')
-#trainer.removeWorstUntil(12)
-#trainer.optimizeOption('NTrees')
-#trainer.optimizeOption('Shrinkage')
-#trainer.optimizeOption('nCuts')
-#trainer.removeWorstUntil(10)
-#trainer.optimizeOption('NTrees')
-#trainer.optimizeOption('Shrinkage')
-#trainer.optimizeOption('nCuts')
-#print "these are found to be the 8 best variables and best bdt and factory options"
-
+#set BDT options
 trainer.setBDTOption("NTrees=1200")
 trainer.setBDTOption("Shrinkage=0.05")
 trainer.setBDTOption("nCuts=50")
-trainer.setBDTOption("MaxDepth=3")
-
-#trainer.optimizeOption('Shrinkage')
-#trainer.optimizeOption('nCuts')
-
-#trainer.suche(1200, 1200, 0.001, 0.05, 30, 60, 10)
-#nt3,nt4,sh3,sh4,nc3,nc4 = trainer.suche(nt1,nt2,sh1,sh2,nc1,nc2,2)
+trainer.setBDTOption("MaxDepth=2")
 
 print trainer.best_variables
 trainer.trainBDT(variables)
@@ -97,3 +75,5 @@ print ROC, ROCT, ksS, ksB
 
 print trainer.bdtoptions
 print trainer.factoryoptions
+
+trainer.showGui()
