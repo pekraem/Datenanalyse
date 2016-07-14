@@ -1,7 +1,7 @@
 import ROOT
 
 
-f=ROOT.TFile("../../TMVAout.root","r+")
+f=ROOT.TFile("../../outfile/autotrain.root","r+")
 HS=f.Get("CorrelationMatrixS")
 HB=f.Get("CorrelationMatrixB")
 HD=HS.Clone()
@@ -28,14 +28,14 @@ c=ROOT.TCanvas("c", "c", 2500, 1200)
 HS.Draw("colz")
 c.SetLeftMargin(0.225)
 c.SetBottomMargin(0.175)
-c.Print("Correlation_Matrix.pdf(")
+c.Print("9var_Correlation_Matrix.pdf(")
 
 #cB=ROOT.TCanvas("c", "c", 2500, 900)
 HB.Draw("colz")
 #c.SetLeftMargin(0.3)
-c.Print("Correlation_Matrix.pdf")
+c.Print("9var_Correlation_Matrix.pdf")
 
 #cD=ROOT.TCanvas("c", "c", 2500, 900)
 HD.Draw("colz")
 #cD.SetLeftMargin(0.3)
-c.Print("Correlation_Matrix.pdf)")
+c.Print("9var_Correlation_Matrix.pdf)")

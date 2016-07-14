@@ -430,3 +430,42 @@ class Trainer:
 	#print "bestes NTrees=", best_NT, "beste Shrinkage=", best_Sh,"beste nCuts=", best_nC	
 	#return nt1,nt2,sh1,sh2,nc1,nc2
        
+    def ams(x, y, w, cut):
+    # Calculate Average Mean Significane as defined in ATLAS paper
+    #    -  approximative formula for large statistics with regularisation
+    # x: array of truth values (1 if signal)
+    # y: array of classifier result
+    # w: array of event weights
+    # cut
+        t = y > cut 
+        s = np.sum((x[t] == 1)*w[t])
+        b = np.sum((x[t] == 0)*w[t])
+        return s/np.sqrt(b+10.0)
+      
+      
+    def bookReader(self, weightfile):
+	ROOT.gStyle.SetOptStat(0)
+	if not hasattr(self, 'signal_train') or not hasattr(self, 'signal_test') or not hasattr(self, 'background_train')  or not hasattr(self, 'background_test'):
+            print 'set training and test samples first'
+            return
+	newbdtoptions=replaceOptions(bdtoptions_,self.bdtoptions)
+        newoptions=replaceOptions(factoryoptions_,self.factoryoptions)
+        reader = ROOT.TMVA.Reader(newoptions)
+        variables=variables_
+        if len(variables)==0:
+            variables = self.best_variables
+        for i in range(len(variables)):
+	    #localvar.append(None)
+	    exec('var_'+str(i)+" = array('f',[0])") in globals(), locals()
+	    #eval("var_"+str(i))=array('f',[0])
+            reader.AddVariable(variables[i],eval("var_"+str(i)))
+            
+        # book reader
+        reader.BookMVA( "BDTG", self.trainedweight)#'weights/weights_2016_0613_142658.xml')#self.trainedweight)
+        
+        # add signal and background trees
+        input_test_S = ROOT.TFile( self.signal_test.path )
+        input_test_B = ROOT.TFile( self.background_test.path )          
+        test_treeS = input_test_S.Get(self.Streename)
+        test_treeB = input_test_B.Get(self.Btreename)
+	ROOT.gROOT.SetBatch(True)
