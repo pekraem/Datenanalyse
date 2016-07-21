@@ -36,6 +36,8 @@ class Trainer:
         self.factoryoptions="V:!Silent:Color:DrawProgressBar:AnalysisType=Classification:Transformations=I;D;P;G,D"
         self.bdtoptions= "!H:!V:NTrees=1000:MinNodeSize=2.5%:BoostType=Grad:Shrinkage=0.10:!UseBaggedBoost:BaggedSampleFraction=0.6:nCuts=20:MaxDepth=2:NegWeightTreatment=IgnoreNegWeightsInTraining"     
         self.setVerbose(verbose)
+        self.signal_prediction=[]
+        self.background_prediction=[]
 
     def setVerbose(self,v=True):
         self.verbose=v
@@ -153,6 +155,7 @@ class Trainer:
         movedfile=self.rootfile
         movedfile=movedfile.replace('.root','_'+dt+'.root')
         #call(['cp',self.rootfile,movedfile])
+        self.trainedweight=weightfile
 
     def evaluateLastTraining(self):
         f = ROOT.TFile(self.outpath+self.rootfile)
@@ -443,7 +446,7 @@ class Trainer:
         return s/np.sqrt(b+10.0)
       
       
-    def bookReader(self, weightfile):
+    def bookReader(self,variables_=[],bdtoptions_="",factoryoptions_=""):#, weightfile):
 	ROOT.gStyle.SetOptStat(0)
 	if not hasattr(self, 'signal_train') or not hasattr(self, 'signal_test') or not hasattr(self, 'background_train')  or not hasattr(self, 'background_test'):
             print 'set training and test samples first'
@@ -466,6 +469,37 @@ class Trainer:
         # add signal and background trees
         input_test_S = ROOT.TFile( self.signal_test.path )
         input_test_B = ROOT.TFile( self.background_test.path )          
-        test_treeS = input_test_S.Get(self.Streename)
-        test_treeB = input_test_B.Get(self.Btreename)
+        test_treeS = input_test_S.Get(self.streename)
+        test_treeB = input_test_B.Get(self.btreename)
 	ROOT.gROOT.SetBatch(True)
+	
+	c = ROOT.TCanvas('c','c',800,600)
+	sighisto = ROOT.TH1F('sighisto','sighisto',50,-2,2)
+	bkghisto = ROOT.TH1F('bkghisto','bkghisto',50,-2,2)
+	
+	#loop over events in trees and save BDToutput
+	for evt in test_treeS:
+	  y = reader.EvaluateMVA( "BDTG" )
+	  self.signal_prediction.append(y)
+	  sighisto.Fill(y)
+	  
+	for evt in test_treeB:
+	  y = reader.EvaluateMVA( "BDTG" )
+	  self.background_prediction.append(y)
+	  bkghisto.Fill(y)
+	
+	sighisto.Draw()
+	bkghisto.Draw("SAME")
+	c.SaveAs('../../outhisto.pdf')
+	
+	
+	#mvaValue = reader.EvaluateMVA( "BDTG" )
+	##print mvaValue
+	#varx[0] = -1
+	#vary[0] = 1
+	#we = reader.EvaluateMVA("BDTG")
+	##print we
+	## create a new 2D histogram with fine binning
+	#histo2 = ROOT.TH2F("histo2","",200,-5,5,200,-5,5)
+	#maxout=0
+	#minout=0

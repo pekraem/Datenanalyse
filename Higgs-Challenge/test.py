@@ -71,8 +71,10 @@ trainer.setBDTOption("MaxDepth=2")
 print trainer.best_variables
 trainer.trainBDT(variables)
 ROC, ksS, ksB, ROCT = trainer.evaluateLastTraining()
+
 print ROC, ROCT, ksS, ksB
 
+trainer.bookReader()
 print trainer.bdtoptions
 print trainer.factoryoptions
 
