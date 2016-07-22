@@ -47,14 +47,14 @@ varsss=['DER_mass_MMC', 'DER_mass_transverse_met_lep', 'PRI_jet_leading_eta', 'P
 skl=xgbLearner(varsss)
 skl.SetSPath("../../atlas-higgs-challenge-2014-v2_part.root")
 skl.SetBPath("../../atlas-higgs-challenge-2014-v2_part.root")
-skl.SetStestPath("../../atlas-higgs-challenge-2014-v2_part.root")
-skl.SetBtestPath("../../atlas-higgs-challenge-2014-v2_part.root")
+#skl.SetStestPath("../../atlas-higgs-challenge-2014-v2_part.root")
+#skl.SetBtestPath("../../atlas-higgs-challenge-2014-v2_part.root")
 skl.SetSTreename('signal')
 skl.SetBTreename('background')
 
 #set BDT options
 skl.SetGradBoostOption('n_estimators', 500)#n_estimators-->number of trees, that are trained
-skl.SetGradBoostOption('max_depth', 3)#max_depht-->depht of trees that are trained
+skl.SetGradBoostOption('max_depth', 2)#max_depht-->depht of trees that are trained
 skl.SetGradBoostOption('learning_rate', 0.02)#learning_rate or shrinkage, value how much former Trees are weighted
 
 #create Plotfile, were all plots are saved as pdf
@@ -63,12 +63,17 @@ skl.SetPlotFile()
 #convert ROOT-Trees to numpy-Arrays (all saved inside skl)
 skl.Convert()
 
+#check conversion
+print len(skl.test_var), len(skl.test_weights), len(skl.test_ID)
+print len(skl.test_var[0]), len(varsss)
+print skl.test_var[0], varsss
+
 #create pairs for testing options
-optslst = []
-for i in range(2):
-    for j in range(2):
-        optslst.append(((i+1)*100,(1+j)*0.01))
-print optslst
+optslst = [(1900,0.25),(1900,0.2)]
+#for i in range(20):
+    #for j in range(20):
+        #optslst.append(((i+1)*100,(1+j)*0.01))
+#print optslst
 
 best_ams = [0,'']
 
@@ -83,7 +88,11 @@ for opts in optslst:
     train = skl.Classify()
 
     #predict BDT output and compute ams
-    ams = skl.find_best_ams(skl.ID_Array,train.decision_function(skl.test_var),skl.Weights_Array)
+    
+    print len(skl.test_ID), len(train.decision_function(skl.test_var)), len(skl.test_weights)
+    for i in range(len(skl.test_ID)):
+        print skl.test_ID[i],train.decision_function(skl.test_var[i]),skl.test_weights[i]
+    ams = skl.find_best_ams(skl.test_ID,train.decision_function(skl.test_var),skl.test_weights)
     
 
 

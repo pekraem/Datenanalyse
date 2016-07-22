@@ -30,7 +30,7 @@ import matplotlib.cm as cm
 from scipy import stats
 from sklearn.externals import joblib
 from scipy.special import expit
-
+from sklearn.cross_validation import train_test_split
 
 def TwoDRange(xmin, xmax, ymin, ymax, steps):
 	#print xmin, xmax, ymin, ymax
@@ -56,6 +56,8 @@ class xgbLearner:
 	self.Var_Array=[]			#Training-Sample: Variables of ROOT.Tree converted to np.Array (shape= ['f',[var1,var2,var3,...]...])
 	self.ID_Array=[]			#Training-Sample: IDs of Events (0 for Background; 1 for Signal)
 	self.Weights_Array=[]
+	self.test_weights=[]
+	self.train_weights=[]
 	self.test_var=[]			#Test-Sample: Variables of ROOT.Tree converted to np.Array (shape= ['f',[var1,var2,var3,...]...])
 	self.test_ID=[]				#Training-Sample: IDs of Events (0 for Background; 1 for Signal)
 	self.test_Background=[]			#Test-Sample: Variables of ROOT.Tree converted to np.Array (shape= ['f',[var1,var2,var3,...]...]); only Background 
@@ -64,9 +66,9 @@ class xgbLearner:
 	self.train_Signal=[]			#Train-Sample: Variables of ROOT.Tree converted to np.Array (shape= ['f',[var1,var2,var3,...]...]); only Signal
 #-------file-paths:-------#			#File Path of Training/TestSamples; plotfile, LogFile; OutFile
 	self.SPath='/nfs/dust/cms/user/pkraemer/trees/ttH_nominal.root'
-	self.StestPath='/nfs/dust/cms/user/pkraemer/trees/ttH_nominal.root'
+	self.StestPath=''
 	self.BPath='/nfs/dust/cms/user/pkraemer/trees/ttbar_nominal.root'
-	self.BtestPath='/nfs/dust/cms/user/pkraemer/trees/ttbar_nominal.root'
+	self.BtestPath=''
 	self.PlotFile='SKlearn_PlotFile.pdf'
 	self.logfilename="log.txt"
 	self.outname="SKout.root"
@@ -161,35 +163,44 @@ class xgbLearner:
 
 #convert .root Trees to numpy arrays
   def Convert(self):
+        if self.weights:
+            self.variables.append(self.weights[0])
+            print self.variables
 	train_Signal=root2array(self.SPath, self.Streename, self.variables)
 	train_Background=root2array(self.BPath, self.Btreename, self.variables)
-	train_Sweight=root2array(self.SPath, self.Streename, self.weights)
-	train_Bweight=root2array(self.BPath, self.Btreename, self.weights)
 	train_Signal=rec2array(train_Signal)
 	self.train_Signal = train_Signal
 	print '#Signalevents = ', len(train_Signal)
 	train_Background=rec2array(train_Background)
 	self.train_Background = train_Background
 	print '#Backgroundevents = ', len(train_Background)
-	train_Sweight=rec2array(train_Sweight)
-	print '#Signalweights = ',len(train_Sweight)
-	train_Bweight=rec2array(train_Bweight)
-	print '#Backgroundweights = ',len(train_Bweight)
 	X_train = np.concatenate((train_Signal, train_Background))
 	y_train = np.concatenate((np.ones(train_Signal.shape[0]), np.zeros(train_Background.shape[0])))
-	w_train = np.concatenate((train_Sweight, train_Bweight))
-	self.Var_Array = X_train
+	if self.StestPath=='':
+            X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.33, random_state=42)
+        else:
+            test_Signal=root2array(self.StestPath, self.Streename, self.variables)
+            test_Background=root2array(self.BtestPath, self.Btreename, self.variables)
+            test_Signal=rec2array(test_Signal)
+            test_Background=rec2array(test_Background)
+            test_Background=rec2array(test_Background)
+            self.test_Signal = test_Signal
+            self.test_Background = test_Background
+            X_test = np.concatenate((test_Signal,test_Background))
+            y_test = np.concatenate((np.ones(test_Signal.shape[0]), np.zeros(test_Background.shape[0])))
+        weights = []    
+        for i in X_train:
+            self.train_weights.append(i[-1])
+            #i.delete( i[-1] )
+        X_train = np.delete(X_train, np.s_[-1], 1)
+        for i in X_test:
+            self.test_weights.append(i[-1])
+            #i.delete(i[-1])
+        X_test = np.delete(X_test, np.s_[-1], 1)
+        self.Var_Array = X_train
 	self.ID_Array = y_train
-	self.Weights_Array = w_train
-	test_Signal=root2array(self.StestPath, self.Streename, self.variables)
-	test_Background=root2array(self.BtestPath, self.Btreename, self.variables)
-	test_Signal=rec2array(test_Signal)
-	self.test_Signal = test_Signal
-	test_Background=rec2array(test_Background)
-	self.test_Background = test_Background
-	self.test_var=np.concatenate((test_Signal,test_Background))
-	self.test_ID=np.concatenate((np.ones(test_Signal.shape[0]), np.zeros(test_Background.shape[0])))
-	self.permuteVars()
+	self.test_var=X_test
+	self.test_ID=y_test
 	#########################################
 	#---store stuff to compare afterwards---#
 	IDfile = open("ID.pkl","w") 	        #
@@ -884,9 +895,11 @@ class xgbLearner:
     # y: array of classifier result
     # w: array of event weights
     # cut
-        t = y > cut 
-        s = np.sum((x[t] == 1)*w[t])
-        b = np.sum((x[t] == 0)*w[t])
+        s,b=0,0
+        for t in range(len(y)):
+            if y[t] > cut:
+                s += ((x[t] == 1)*w[t])
+                b += ((x[t] == 0)*w[t])
         b_null=3    #small sample
         #b_null=10   #big_sample
         print "ams = ", s/np.sqrt(b+b_null)

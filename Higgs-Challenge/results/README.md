@@ -22,3 +22,15 @@ all steps should be documented in this readme
 3. implement some plotting functions
 
 4. testing different MVAoptions, inputvariables for best score
+
+
+-----------------------------------------------------------------
+1. reasonable variables:
+   * looked at scikit-learn feature_importances_
+   * selected some variables
+
+2. implementation:
+   * scikit-learn scripts are (almost) running
+   * testing some BDT options in scikit-learn --> overtraining
+   * --> splitting sample in training and testing samples
+
