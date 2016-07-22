@@ -172,7 +172,9 @@ class xgbLearner:
 	self.train_Background = train_Background
 	print '#Backgroundevents = ', len(train_Background)
 	train_Sweight=rec2array(train_Sweight)
+	print '#Signalweights = ',len(train_Sweight)
 	train_Bweight=rec2array(train_Bweight)
+	print '#Backgroundweights = ',len(train_Bweight)
 	X_train = np.concatenate((train_Signal, train_Background))
 	y_train = np.concatenate((np.ones(train_Signal.shape[0]), np.zeros(train_Background.shape[0])))
 	w_train = np.concatenate((train_Sweight, train_Bweight))
@@ -266,8 +268,8 @@ class xgbLearner:
 	train = GradientBoostingClassifier(learning_rate=self.learning_rate, n_estimators=self.n_estimators, max_depth=self.max_depth, random_state=self.random_state, loss=self.loss, subsample=self.subsample, min_samples_split=self.min_samples_split, min_samples_leaf=self.min_samples_leaf, min_weight_fraction_leaf=self.min_weight_fraction_leaf, init=self.init, max_features=self.max_features, verbose=self.verbose, max_leaf_nodes=self.max_leaf_nodes, warm_start=self.warm_start, presort=self.presort).fit(self.Var_Array,self.ID_Array)
 	self.PrintLog(train)
 	dt=datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
-	joblib.dump(train, self.ClassifierPath+'CLF_'+dt+'.pkl') 
-	self.LastClassification = self.ClassifierPath+'CLF_'+dt+'.pkl'
+	#joblib.dump(train, self.ClassifierPath+'CLF_'+dt+'.pkl') 
+	#self.LastClassification = self.ClassifierPath+'CLF_'+dt+'.pkl'
 	return train
       
       
@@ -303,7 +305,7 @@ class xgbLearner:
 #prints logfile of the training
   def PrintLog(self,train):
 	gbo='learning_rate='+str(self.learning_rate)+', n_estimators='+str(self.n_estimators)+', max_depth='+str(self.max_depth)+', random_state='+str(self.random_state)+', loss='+str(self.loss)+', subsample='+str(self.subsample)+', min_samples_split='+str(self.min_samples_split)+', min_samples_leaf='+str(self.min_samples_leaf)+', min_weight_fraction_leaf='+str(self.min_weight_fraction_leaf)+', init='+str(self.init)+', max_features='+str(self.max_features)+', verbose='+str(self.verbose)+', max_leaf_nodes='+str(self.max_leaf_nodes)+', warm_start='+str(self.warm_start)+', presort='+str(self.presort)
-	outstr='\n\n-----------------input variables:-----------------\n'+str(self.variables)+'\n\n-----------------weights:-----------------\n'+str(self.weights)+'\n\n-----------------'+str(self.CLFname)+' Options:-----------------\n'+gbo+'\n\n\n\n'+'--------------- ROC integral = '+str(self.ROCInt(train))+' -----------------\n\n\n---------------- KS-Test:'+str(self.KSTest(train))+'-------------------'
+	outstr='\n\n-----------------input variables:-----------------\n'+str(self.variables)+'\n\n-----------------weights:-----------------\n'+str(self.weights)+'\n\n-----------------'+str(self.CLFname)+' Options:-----------------\n'+gbo+'\n\n\n\n'+'--------------- ROC integral = '+str(self.ROCInt(train))#+' -----------------\n\n\n---------------- KS-Test:'+str(self.KSTest(train))+'-------------------'
 	logfile = open(self.logfilename,"a+")
 	logfile.write('######'+datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")+'#####'+outstr+'###############################################\n\n\n\n\n')
 	logfile.close()
@@ -856,8 +858,8 @@ class xgbLearner:
       #tmp_sigprob.append(s/diff-ps_low)
     #for s in bs:
       #tmp_bkgprob.append(s/diff-ps_low)
-    proba=[ps,ss,bs]
-    #proba=[prob,sig_prob,bkg_prob]
+    #proba=[ps,ss,bs]
+    proba=[prob,sig_prob,bkg_prob]
     #proba=[tmp_ps,tmp_sigprob,tmp_bkgprob]
     #########################################
     #---store stuff to compare afterwards---#
@@ -875,7 +877,7 @@ class xgbLearner:
 #  def compareTrain(self, trains):
     
 
-  def ams(x, y, w, cut):
+  def ams(self, x, y, w, cut):
     # Calculate Average Mean Significane as defined in ATLAS paper
     #    -  approximative formula for large statistics with regularisation
     # x: array of truth values (1 if signal)
@@ -885,9 +887,12 @@ class xgbLearner:
         t = y > cut 
         s = np.sum((x[t] == 1)*w[t])
         b = np.sum((x[t] == 0)*w[t])
-        return s/np.sqrt(b+10.0)
+        b_null=3    #small sample
+        #b_null=10   #big_sample
+        print "ams = ", s/np.sqrt(b+b_null)
+        return s/np.sqrt(b+b_null)
 
-  def find_best_ams(x, y, w):
+  def find_best_ams(self, x, y, w):
     # find best value of AMS by scanning cut values; 
     # x: array of truth values (1 if signal)
     # y: array of classifier results
@@ -899,11 +904,12 @@ class xgbLearner:
         ymin=min(y) # classifiers may not be in range [0.,1.]
         ymax=max(y)
         nprobe=200    # number of (equally spaced) scan points to probe classifier 
-        amsvec= [(ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
+        amsvec= [(self.ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
         maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
-        return maxams, amsvec
+        #return maxams, amsvec
 
-	maxams_BDT, amsvec_BDT=find_best_ams(x, y, w)
+	#maxams_BDT, amsvec_BDT=find_best_ams(x, y, w)
 
 	print "Average Mean Sensitivity (AMS) and cut value:"
-	print maxams_BDT
+	print maxams
+	return maxams

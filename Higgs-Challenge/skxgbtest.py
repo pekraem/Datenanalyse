@@ -1,5 +1,5 @@
 from skxgb import xgbLearner
-from skLearner import sklearner
+#from skLearner import sklearner
 import matplotlib.pyplot as plt
 from time import *
 from matplotlib.backends.backend_pdf import PdfPages
@@ -71,7 +71,7 @@ classifiers=[]
 
 XGB.Convert()
 #XGB.Shuffle(XGB.Var_Array,XGB.ID_Array)
-LEARN.Convert()
+#LEARN.Convert()
 #opts=[['learning_rate',0.05,0.07],['n_estimators',1200,1500]]
 #varlst, indexlist = LEARNER.permuteVars()
 #print varlst
@@ -160,6 +160,8 @@ T = XGB.XGBClassify()#--> XGBoost Classification
 #print t.decision_function(XGB.test_var)
 
 sklpred = XGB.pred_proba(t)
+ID=XGB.ID_Array
+weights=XGB.Weights_Array
 XGB.pred_proba(T)
 
-XGB.find_best_ams(sklpred,XGB.ID_Array,XGB.Weights_Array)
+XGB.find_best_ams(sklpred[0],ID,weights)
