@@ -183,7 +183,6 @@ class xgbLearner:
             test_Background=root2array(self.BtestPath, self.Btreename, self.variables)
             test_Signal=rec2array(test_Signal)
             test_Background=rec2array(test_Background)
-            test_Background=rec2array(test_Background)
             self.test_Signal = test_Signal
             self.test_Background = test_Background
             X_test = np.concatenate((test_Signal,test_Background))
@@ -197,6 +196,7 @@ class xgbLearner:
             self.test_weights.append(i[-1])
             #i.delete(i[-1])
         X_test = np.delete(X_test, np.s_[-1], 1)
+        del self.variables[-1]
         self.Var_Array = X_train
 	self.ID_Array = y_train
 	self.test_var=X_test
@@ -895,14 +895,22 @@ class xgbLearner:
     # y: array of classifier result
     # w: array of event weights
     # cut
-        s,b=0,0
+        s=0
+        b=0
         for t in range(len(y)):
             if y[t] > cut:
-                s += ((x[t] == 1)*w[t])
-                b += ((x[t] == 0)*w[t])
-        b_null=3    #small sample
-        #b_null=10   #big_sample
-        print "ams = ", s/np.sqrt(b+b_null)
+	       if (x[t] == 1):
+                s += 1*w[t]
+               if (x[t] == 0):
+                b += 1*w[t]
+        #t = y > cut
+        ##for i in range(len(y)):
+	  ##print 't = ',t[i],'#### y= ',y[i], '####  cut = ',cut
+        #s = np.sum((x[t] == 1)*w[t])
+        #b = np.sum((x[t] == 0)*w[t])
+        #b_null=3    #small sample
+        b_null=10   #big_sample
+        #print "ams = ", s/np.sqrt(b+b_null)
         return s/np.sqrt(b+b_null)
 
   def find_best_ams(self, x, y, w):
@@ -914,10 +922,19 @@ class xgbLearner:
     #   ntuple of best value of AMS and the corresponding cut value
     #   list with corresponding pairs (ams, cut) 
     # ----------------------------------------------------------
-        ymin=min(y) # classifiers may not be in range [0.,1.]
-        ymax=max(y)
+        ymin=np.min(y) # classifiers may not be in range [0.,1.]
+        print 'ymin = ', ymin
+        ymax=np.max(y)
+        print 'ymax = ' ,ymax
+        #print x, y, w
+        print type(x), type(y), type(w)
         nprobe=200    # number of (equally spaced) scan points to probe classifier 
-        amsvec= [(self.ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
+        cuts = np.linspace(ymin, ymax, nprobe)
+        #print cuts
+        y=y.tolist()
+        amsvec=[]
+        for cut in cuts:
+	  amsvec.append((self.ams(x, y, w, cut), cut))
         maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
         #return maxams, amsvec
 

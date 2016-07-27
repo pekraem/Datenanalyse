@@ -440,14 +440,55 @@ class Trainer:
     # y: array of classifier result
     # w: array of event weights
     # cut
-        t = y > cut 
-        s = np.sum((x[t] == 1)*w[t])
-        b = np.sum((x[t] == 0)*w[t])
+        #t = y > cut 
+        #s = np.sum((x[t] == 1)*w[t])
+        #b = np.sum((x[t] == 0)*w[t])
+        #return s/np.sqrt(b+10.0)
+        s=0
+        b=0
+        for t in range(len(y)):
+            if y[t] > cut:
+	       if (x[t] == 1):
+                s += 1*w[t]
+               if (x[t] == 0):
+                b += 1*w[t]
         return s/np.sqrt(b+10.0)
+    
+    def find_best_ams(self, x, y, w):
+    # find best value of AMS by scanning cut values; 
+    # x: array of truth values (1 if signal)
+    # y: array of classifier results
+    # w: array of event weights
+    #  returns 
+    #   ntuple of best value of AMS and the corresponding cut value
+    #   list with corresponding pairs (ams, cut) 
+    # ----------------------------------------------------------
+        ymin=np.min(y) # classifiers may not be in range [0.,1.]
+        print 'ymin = ', ymin
+        ymax=np.max(y)
+        print 'ymax = ' ,ymax
+        #print x, y, w
+        print type(x), type(y), type(w)
+        nprobe=200    # number of (equally spaced) scan points to probe classifier 
+        cuts = np.linspace(ymin, ymax, nprobe)
+        #print cuts
+        y=y.tolist()
+        amsvec=[]
+        for cut in cuts:
+	  amsvec.append((self.ams(x, y, w, cut), cut))
+        maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
+        #return maxams, amsvec
+
+	#maxams_BDT, amsvec_BDT=find_best_ams(x, y, w)
+
+	print "Average Mean Sensitivity (AMS) and cut value:"
+	print maxams
+	return maxams
       
       
     def bookReader(self,variables_=[],bdtoptions_="",factoryoptions_=""):#, weightfile):
 	ROOT.gStyle.SetOptStat(0)
+	localvar=[]
 	if not hasattr(self, 'signal_train') or not hasattr(self, 'signal_test') or not hasattr(self, 'background_train')  or not hasattr(self, 'background_test'):
             print 'set training and test samples first'
             return
@@ -458,10 +499,11 @@ class Trainer:
         if len(variables)==0:
             variables = self.best_variables
         for i in range(len(variables)):
-	    #localvar.append(None)
+	    localvar.append(array('f',[0]))
 	    exec('var_'+str(i)+" = array('f',[0])") in globals(), locals()
 	    #eval("var_"+str(i))=array('f',[0])
-            reader.AddVariable(variables[i],eval("var_"+str(i)))
+            #reader.AddVariable(variables[i],eval("var_"+str(i)))
+            reader.AddVariable(variables[i],localvar[i])
             
         # book reader
         reader.BookMVA( "BDTG", self.trainedweight)#'weights/weights_2016_0613_142658.xml')#self.trainedweight)
@@ -472,6 +514,7 @@ class Trainer:
         test_treeS = input_test_S.Get(self.streename)
         test_treeB = input_test_B.Get(self.btreename)
 	ROOT.gROOT.SetBatch(True)
+    
 	
 	c = ROOT.TCanvas('c','c',800,600)
 	sighisto = ROOT.TH1F('sighisto','sighisto',50,-2,2)
@@ -479,14 +522,18 @@ class Trainer:
 	
 	#loop over events in trees and save BDToutput
 	for evt in test_treeS:
-	  y = reader.EvaluateMVA( "BDTG" )
-	  self.signal_prediction.append(y)
-	  sighisto.Fill(y)
+            for i in range(len(localvar)):  
+                exec("localvar[i]=test_treeS."+str(variables[i]))
+            y = reader.EvaluateMVA( "BDTG" )
+            self.signal_prediction.append(y)
+            sighisto.Fill(y)
 	  
 	for evt in test_treeB:
-	  y = reader.EvaluateMVA( "BDTG" )
-	  self.background_prediction.append(y)
-	  bkghisto.Fill(y)
+            for i in range(len(localvar)):
+                exec("localvar[i]=test_treeB."+str(variables[i]))
+            y = reader.EvaluateMVA( "BDTG" )
+            self.background_prediction.append(y)
+            bkghisto.Fill(y)
 	
 	sighisto.Draw()
 	bkghisto.Draw("SAME")
@@ -503,3 +550,5 @@ class Trainer:
 	#histo2 = ROOT.TH2F("histo2","",200,-5,5,200,-5,5)
 	#maxout=0
 	#minout=0
+	
+	

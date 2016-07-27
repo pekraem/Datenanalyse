@@ -13,40 +13,40 @@ SKL_time_01 = clock()
 variables=["DER_mass_MMC",
 	   "DER_mass_transverse_met_lep",
 	   "DER_mass_vis",
-	   "DER_pt_h",
-           "DER_deltaeta_jet_jet",
+	   #"DER_pt_h",
+           #"DER_deltaeta_jet_jet",
            "DER_mass_jet_jet",
-           "DER_prodeta_jet_jet",
+           #"DER_prodeta_jet_jet",
            "DER_deltar_tau_lep",
-           "DER_pt_tot",
+           #"DER_pt_tot",
            "DER_sum_pt",
-           "DER_pt_ratio_lep_tau",
-           "DER_met_phi_centrality",
-           "DER_lep_eta_centrality",
+          # "DER_pt_ratio_lep_tau",
+           #"DER_met_phi_centrality",
+           #"DER_lep_eta_centrality",
            "PRI_tau_pt",
            "PRI_tau_eta",
-           "PRI_tau_phi",
-           "PRI_lep_pt",
+           #"PRI_tau_phi",
+           #"PRI_lep_pt",
            "PRI_lep_eta",
-           "PRI_lep_phi",
+           #"PRI_lep_phi",
            "PRI_met",
-           "PRI_met_phi",
-           "PRI_met_sumet",
-           "PRI_jet_num",
-           "PRI_jet_leading_pt",
+           #"PRI_met_phi",
+           #"PRI_met_sumet",
+           #"PRI_jet_num",
+           #"PRI_jet_leading_pt",
            "PRI_jet_leading_eta",
-           "PRI_jet_leading_phi",
-           "PRI_jet_subleading_pt",
-           "PRI_jet_subleading_eta",
-           "PRI_jet_subleading_phi",
-           "PRI_jet_all_pt"
+           #"PRI_jet_leading_phi",
+           #"PRI_jet_subleading_pt",
+           #"PRI_jet_subleading_eta",
+           #"PRI_jet_subleading_phi",
+           #"PRI_jet_all_pt"
 ]
 varsss=['DER_mass_MMC', 'DER_mass_transverse_met_lep', 'PRI_jet_leading_eta', 'PRI_tau_pt', 'DER_mass_vis', 'DER_deltar_tau_lep', 'PRI_lep_eta', 'PRI_tau_eta', 'DER_mass_jet_jet', 'PRI_met']
 
 #construct scikit-learn classifier class (xgbLearner), initialize variables and paths
-skl=xgbLearner(varsss)
-skl.SetSPath("../../atlas-higgs-challenge-2014-v2_part.root")
-skl.SetBPath("../../atlas-higgs-challenge-2014-v2_part.root")
+skl=xgbLearner(variables)
+skl.SetSPath("../../atlas-higgs-challenge-2014-v2.root")
+skl.SetBPath("../../atlas-higgs-challenge-2014-v2.root")
 #skl.SetStestPath("../../atlas-higgs-challenge-2014-v2_part.root")
 #skl.SetBtestPath("../../atlas-higgs-challenge-2014-v2_part.root")
 skl.SetSTreename('signal')
@@ -62,23 +62,29 @@ skl.SetPlotFile()
 
 #convert ROOT-Trees to numpy-Arrays (all saved inside skl)
 skl.Convert()
-
+loww=min(skl.test_weights)
+hiw=max(skl.test_weights)
+lowx_highx=(loww,hiw)
+plt.hist(skl.test_weights, color='r', range=lowx_highx, bins=25, histtype='stepfilled', alpha=0.2, normed=False, label='signal')
+#plt.show()
 #check conversion
 print len(skl.test_var), len(skl.test_weights), len(skl.test_ID)
 print len(skl.test_var[0]), len(varsss)
 print skl.test_var[0], varsss
 
 #create pairs for testing options
-optslst = [(1900,0.25),(1900,0.2)]
-#for i in range(20):
-    #for j in range(20):
-        #optslst.append(((i+1)*100,(1+j)*0.01))
+optslst = [(1000,0.03)]
+#for i in range(10):
+    #for j in range(10):
+        #optslst.append(((i+15)*100,(0.001*j)+0.005))
 #print optslst
+
+
 
 best_ams = [0,'']
 
 for opts in optslst:
-    print opts
+    #print opts
     SKL_time_01 = clock()
     
     skl.SetGradBoostOption('n_estimators', opts[0])
@@ -89,21 +95,21 @@ for opts in optslst:
 
     #predict BDT output and compute ams
     
-    print len(skl.test_ID), len(train.decision_function(skl.test_var)), len(skl.test_weights)
-    for i in range(len(skl.test_ID)):
-        print skl.test_ID[i],train.decision_function(skl.test_var[i]),skl.test_weights[i]
+    #print len(skl.test_ID), len(train.decision_function(skl.test_var)), len(skl.test_weights)
+    #for i in range(len(skl.test_ID)):
+    #    print skl.test_ID[i],train.decision_function(skl.test_var[i]),skl.test_weights[i]
     ams = skl.find_best_ams(skl.test_ID,train.decision_function(skl.test_var),skl.test_weights)
-    
+    #ams = skl.find_best_ams(skl.test_ID,train.predict(skl.test_var),skl.test_weights)   
 
 
-#print variable importances
-#varlst=[]
-#for i in range(len(variables)):
-    #varlst.append((train.feature_importances_[i], variables[i]))
-#variable_importance = sorted(varlst, key=lambda lst:lst[0] )
-#print variable_importance
-#for pair in variable_importance:
-    #print pair[0],pair[1]
+    #print variable importances
+    varlst=[]
+    for i in range(len(variables)):
+        varlst.append((train.feature_importances_[i], variables[i]))
+    variable_importance = sorted(varlst, key=lambda lst:lst[0] )
+    print variable_importance
+    for pair in variable_importance:
+        print pair[0],pair[1]
 #var=['[']
 #for i in range(10):
     #var.append(str(variable_importance[29-i][1]))

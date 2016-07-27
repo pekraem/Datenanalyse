@@ -6,12 +6,12 @@ from mvautils import *
 #from interpol_vars import *
 
 #define variables, commend out unuseful ones
-variables=[#"DER_mass_MMC",
+variables=["DER_mass_MMC",
 	   "DER_mass_transverse_met_lep",
 	   "DER_mass_vis",
 	   #"DER_pt_h",
            #"DER_deltaeta_jet_jet",
-           #"DER_mass_jet_jet",
+           "DER_mass_jet_jet",
            #"DER_prodeta_jet_jet",
            "DER_deltar_tau_lep",
            #"DER_pt_tot",
@@ -20,10 +20,10 @@ variables=[#"DER_mass_MMC",
            "DER_met_phi_centrality",
            #"DER_lep_eta_centrality",
            "PRI_tau_pt",
-           #"PRI_tau_eta",
+           "PRI_tau_eta",
            #"PRI_tau_phi",
            #"PRI_lep_pt",
-           #"PRI_lep_eta",
+           "PRI_lep_eta",
            #"PRI_lep_phi",
            "PRI_met",
            #"PRI_met_phi",
@@ -37,6 +37,7 @@ variables=[#"DER_mass_MMC",
            #"PRI_jet_subleading_phi",
            #"PRI_jet_all_pt"
 ]
+varsss=['DER_mass_MMC', 'DER_mass_transverse_met_lep', 'PRI_jet_leading_eta', 'PRI_tau_pt', 'DER_mass_vis', 'DER_deltar_tau_lep', 'PRI_lep_eta', 'PRI_tau_eta', 'DER_mass_jet_jet', 'PRI_met']
 
 #needed for trainer class
 addtional_variables=[]

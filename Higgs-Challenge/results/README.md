@@ -34,3 +34,25 @@ all steps should be documented in this readme
    * testing some BDT options in scikit-learn --> overtraining
    * --> splitting sample in training and testing samples
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------------------------------------------
+scikit-learn training with big sample:
+
++++ Best AMS = 1.1326961838+++
+with: learning_rate=0.014, n_estimators=1500, max_depth=5, random_state=0, loss=deviance,
+subsample=1.0, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, 
+init=None, max_features=None, verbose=0, max_leaf_nodes=None, warm_start=False, presort=auto
+
