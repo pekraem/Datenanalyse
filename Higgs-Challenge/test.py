@@ -48,12 +48,13 @@ cat='6j4t'
 
 #change path if necessary
 signal_test=Sample('t#bar{t}H test',ROOT.kBlue,"../../atlas-higgs-challenge-2014-v2.root",'') 
-signal_train=Sample('t#bar{t}H training',ROOT.kGreen,"../../atlas-higgs-challenge-2014-v2_part.root",'')
+signal_train=Sample('t#bar{t}H training',ROOT.kGreen,"../../atlas-higgs-challenge-2014-v2.root",'')
 background_test=Sample('t#bar{t} test',ROOT.kRed+1,"../../atlas-higgs-challenge-2014-v2.root",'')
-background_train=Sample('t#bar{t} training',ROOT.kRed-1,"../../atlas-higgs-challenge-2014-v2_part.root",'')
+background_train=Sample('t#bar{t} training',ROOT.kRed-1,"../../atlas-higgs-challenge-2014-v2.root",'')
 
 #create trainer and set trainer options
 trainer=Trainer(variables,addtional_variables)
+#trainer.addSamples(signal_train,background_train)
 trainer.addSamples(signal_train,background_train,signal_test,background_test) #add the sample defined above
 trainer.setSTreeName('signal') # name of signaltree in files
 trainer.setBTreeName('background') # name of backgroundtree in files
@@ -64,8 +65,8 @@ trainer.setVerbose(True) # no output during BDT training and testing
 trainer.setWeightExpression('Weight')
 
 #set BDT options
-trainer.setBDTOption("NTrees=7000")
-trainer.setBDTOption("Shrinkage=0.003")
+trainer.setBDTOption("NTrees=1000")
+trainer.setBDTOption("Shrinkage=0.01")
 trainer.setBDTOption("nCuts=50")
 trainer.setBDTOption("MaxDepth=2")
 

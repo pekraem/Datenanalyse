@@ -49,6 +49,7 @@ class Trainer:
             self.setFactoryOption('Silent')
            
     def addSamples(self, signal_train,background_train,signal_test,background_test):
+    #def addSamples(self, signal_train,background_train):      
         self.signal_train=signal_train
         self.signal_test=signal_test
         self.background_train=background_train
@@ -122,18 +123,18 @@ class Trainer:
         treeS = inputS.Get(self.streename)
         treeB = inputB.Get(self.btreename)
         
-        inputS_test = ROOT.TFile( self.signal_test.path )
-        inputB_test = ROOT.TFile( self.background_test.path )          
-        treeS_test = inputS_test.Get(self.streename)
-        treeB_test = inputB_test.Get(self.btreename)
+        #inputS_test = ROOT.TFile( self.signal_test.path )
+        #inputB_test = ROOT.TFile( self.background_test.path )          
+        #treeS_test = inputS_test.Get(self.streename)
+        #treeB_test = inputB_test.Get(self.btreename)
         
         # use equal weights for signal and bkg
         signalWeight     = 1.
         backgroundWeight = 1.
         factory.AddSignalTree    ( treeS, signalWeight )
         factory.AddBackgroundTree( treeB, backgroundWeight)
-        factory.AddSignalTree    ( treeS_test, signalWeight,ROOT.TMVA.Types.kTesting )
-        factory.AddBackgroundTree( treeB_test, backgroundWeight,ROOT.TMVA.Types.kTesting)
+        #factory.AddSignalTree    ( treeS_test, signalWeight,ROOT.TMVA.Types.kTesting )
+        #factory.AddBackgroundTree( treeB_test, backgroundWeight,ROOT.TMVA.Types.kTesting)
         factory.SetWeightExpression(self.weightexpression)
         # make cuts
         mycuts = ROOT.TCut(self.selection)
@@ -329,9 +330,9 @@ class Trainer:
             time = self.trainBDT([],"")
 	      #self.testBDT([],"")
 	    ROC, ksS, ksB, ROCT = self.evaluateLastTraining()
-            roc_hist.SetBinContent(k+1,i+1,ROC)
-	    roct_hist.SetBinContent(k+1,i+1,ROCT)
-	    ratio_hist.SetBinContent(k+1,i+1,(ROC/ROCT))
+            #roc_hist.SetBinContent(k+1,i+1,ROC)
+	    #roct_hist.SetBinContent(k+1,i+1,ROCT)
+	    #ratio_hist.SetBinContent(k+1,i+1,(ROC/ROCT))
 	    timelist.append(time)
 	    ROClist.append(ROC)
 	    KSSlist.append(ksS)
@@ -497,30 +498,54 @@ class Trainer:
       return best_ams
       
 	
-    def ams(self, x, y, w, cut):
-    # Calculate Average Mean Significane as defined in ATLAS paper
-    #    -  approximative formula for large statistics with regularisation
-    # x: array of truth values (1 if signal)
-    # y: array of classifier result
-    # w: array of event weights
-    # cut
-        t = y > cut 
-        s = np.sum((x[t] == 1)*w[t])
-        b = np.sum((x[t] == 0)*w[t])
+    def ams(self, x, y, w, cut):
+
+    # Calculate Average Mean Significane as defined in ATLAS paper
+
+    #    -  approximative formula for large statistics with regularisation
+
+    # x: array of truth values (1 if signal)
+
+    # y: array of classifier result
+
+    # w: array of event weights
+
+    # cut
+
+        t = y > cut 
+
+        s = np.sum((x[t] == 1)*w[t])
+
+        b = np.sum((x[t] == 0)*w[t])
+
         return s/np.sqrt(b+10.0)
 	
-    def find_best_ams(self, x, y, w):
-    # find best value of AMS by scanning cut values; 
-    # x: array of truth values (1 if signal)
-    # y: array of classifier results
-    # w: array of event weights
-    #  returns 
-    #   ntuple of best value of AMS and the corresponding cut value
-    #   list with corresponding pairs (ams, cut) 
-    # ----------------------------------------------------------
-        ymin=min(y) # classifiers may not be in range [0.,1.]
-        ymax=max(y)
-        nprobe=200    # number of (equally spaced) scan points to probe classifier 
-        amsvec= [(self.ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
-        maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
+    def find_best_ams(self, x, y, w):
+
+    # find best value of AMS by scanning cut values; 
+
+    # x: array of truth values (1 if signal)
+
+    # y: array of classifier results
+
+    # w: array of event weights
+
+    #  returns 
+
+    #   ntuple of best value of AMS and the corresponding cut value
+
+    #   list with corresponding pairs (ams, cut) 
+
+    # ----------------------------------------------------------
+
+        ymin=min(y) # classifiers may not be in range [0.,1.]
+
+        ymax=max(y)
+
+        nprobe=200    # number of (equally spaced) scan points to probe classifier 
+
+        amsvec= [(self.ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
+
+        maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
+
         return maxams, amsvec      
