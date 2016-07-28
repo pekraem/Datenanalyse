@@ -193,7 +193,7 @@ class Trainer:
         
         outstr='ROC='+str(rocintegral)+'   ROC_tr='+str(rocintegral_training)+'   ksS='+str(ksS)+'   ksB'+str(ksB)+"\n"
         logfile = open("log_roc.txt","a+")
-        logfile.write('######'+str(localtime())+'#####'+"\n"+"\n"+"\n"+str(self.best_variables)+"\n"+"\n"+str(self.bdtoptions)+"\n"+"\n"+outstr+'###############################################\n\n\n\n\n')
+        logfile.write('######'+str(localtime())+'#####'+"\n"+"\n"+"\n"+'best AMS = ,'+str(self.bookbetterReader())+"\n"+str(self.best_variables)+"\n"+"\n"+str(self.bdtoptions)+"\n"+"\n"+outstr+'###############################################\n\n\n\n\n')
         logfile.close()
 
 
