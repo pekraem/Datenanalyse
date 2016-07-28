@@ -11,6 +11,7 @@ sys.path.insert(0, '../pyroot-plotscripts')
 from plotutils import *
 from mvautils import *
 from time import *
+import numpy as np
 
 class Trainer:
     def __init__(self, variables, variables_to_try=[], verbose=False):
@@ -38,6 +39,7 @@ class Trainer:
         self.setVerbose(verbose)
         self.signal_prediction=[]
         self.background_prediction=[]
+        self.treepath="../../atlas-higgs-challenge-2014-v2.root"
 
     def setVerbose(self,v=True):
         self.verbose=v
@@ -294,14 +296,12 @@ class Trainer:
             self.optimizeOption(option,lowfactorlist)
 
 
-
-
-    def suche(self,NTrees_min, NTrees_max, Shrin_min, Shrin_max, nCuts_min, nCuts_max, Schritte):
+    def suche(self,NTrees_min, NTrees_max, Shrin_min, Shrin_max, Schritte):
 
 
 	self.setBDTOption("NTrees="+str(NTrees_min))
 	self.setBDTOption("Shrinkage="+str(Shrin_min))
-	self.setBDTOption("nCuts="+str(nCuts_min))
+	#self.setBDTOption("nCuts="+str(nCuts_min))
 	test_max=0
 	best_NT=0
 	best_Sh=0
@@ -312,126 +312,39 @@ class Trainer:
 	ijk=[0,0,0]
 	
 	mystyle=ROOT.gStyle.SetOptStat(0)
-	
-	roc_hist=ROOT.TH2F("roc_hist","roc_hist",Schritte,Shrin_min,Shrin_max,Schritte,nCuts_min,nCuts_max)
-	roc_hist.SetXTitle("Shrinkage")
-	roc_hist.SetYTitle("nCuts")
-	#roc_hist.SetLineColor("kblue")
-	roct_hist=ROOT.TH2F("roct_hist","roct_hist",Schritte,Shrin_min,Shrin_max,Schritte,nCuts_min,nCuts_max)
-	roct_hist.SetXTitle("Shrinkage")
-	roct_hist.SetYTitle("nCuts")
-	ratio_hist=ROOT.TH2F("ratio_hist","ROC/ROCT",Schritte,Shrin_min,Shrin_max,Schritte,nCuts_min,nCuts_max)
-	ratio_hist.SetXTitle("Shrinkage")
-	ratio_hist.SetYTitle("nCuts")
-	#roct_hist.SetLineColor("kred")
-	c=ROOT.TCanvas("c","c",800,600)
-	c.SetRightMargin(0.15)
 
+	timelist=[]
+	ROClist=[]
+	KSSlist=[]
+	KSBlist=[]
+	OPTlist=[]
 
-#for k in range(0,Schritte):
-  #ntrees[k]=NTrees_min+k*int((NTrees_max-NTrees_min)/Schritte)
-  #shrin[k]=Shrin_min+k*((Shrin_max-Shrin_min)/Schritte)
-  #ncuts[k]=nCuts_min+k*int((nCuts_max-nCuts_min)/Schritte)
-
-	for i in range(0,1):
+	for i in range(0,Schritte):
 	  ntrees[i]=NTrees_min+i*int((NTrees_max-NTrees_min)/Schritte)
 	  self.setBDTOption("NTrees="+str(NTrees_min+i*int((NTrees_max-NTrees_min)/Schritte)))
-	  #self.trainBDT([],"")
-	  #ROC, ksS, ksB, ROCT = self.evaluateLastTraining()
-	  #test_tmp=10*ROC+min(ksS,ksB)
-	  #if test_tmp>test_max:
-	    #test_max=test_tmp
-	    #best_NT=ntrees[i]
-	    #ijk[0]=i
-    
 	  for k in range(0,Schritte):
 	    shrin[k]=Shrin_min+k*((Shrin_max-Shrin_min)/Schritte)
 	    self.setBDTOption("Shrinkage="+str(Shrin_min+k*((Shrin_max-Shrin_min)/Schritte)))
 	    k1=Shrin_min+k*((Shrin_max-Shrin_min)/Schritte)
-	    #self.trainBDT([],"")
-	    #ROC, ksS, ksB, ROCT = self.evaluateLastTraining()
-	    #test_tmp=10*ROC+min(ksS,ksB)
-	    #if test_tmp>test_max:
-	      #test_max=test_tmp
-	      #best_Sh=shrin[k]
-	      #ijk[1]=k
-     
-	    for j in range(0,Schritte):
-	      ncuts[j]=nCuts_min+j*int((nCuts_max-nCuts_min)/Schritte)
-	      self.setBDTOption("nCuts="+str(nCuts_min+j*int((nCuts_max-nCuts_min)/Schritte)))
-	      j1=nCuts_min+j*int((nCuts_max-nCuts_min)/Schritte)
-	      self.trainBDT([],"")
-	      ROC, ksS, ksB, ROCT = self.evaluateLastTraining()
-	      roc_hist.SetBinContent(k+1,j+1,ROC)
-	      roct_hist.SetBinContent(k+1,j+1,ROCT)
-	      ratio_hist.SetBinContent(k+1,j+1,(ROC/ROCT))
-	      test_tmp=10*ROC+min(ksS,ksB)
-	      if test_tmp>test_max:
-		test_max=test_tmp
-		best_nC=ncuts[j]
-		ijk[2]=j
-	
-	
-	#if ijk[0]==NTrees_min:
-	  #nt1=ntrees[0]
-	#else:
-	  #nt1=ntrees[ijk[0]-1]
-	#if ijk[1]==Shrin_min:
-	  #sh1=shrin[0]
-	#else:
-	  #sh1=shrin[ijk[1]-1]
-	#if ijk[2]==nCuts_min:
-	  #nc1=ncuts[0]
-	#else:
-	  #nc1=ncuts[ijk[2]-1]
-  
-	#if ijk[0]==NTrees_max:
-	  #nt2=ntrees[Schritte]
-	#else:
-	  #nt2=ntrees[ijk[0]+1]
-	#if ijk[1]==Shrin_max:
-	  #sh2=shrin[Schritte]
-	#else:
-	  #sh2=shrin[ijk[1]+1]
-	#if ijk[2]==nCuts_max:
-	  #nc2=ncuts[Schritte]
-	#else:
-	  #nc2=ncuts[ijk[2]+1]
-	  
-	roc_hist.Draw("colz")
-	c.Update()
-	c.SaveAs("ROC_hist.pdf(")
-	c.Clear()
-	roct_hist.Draw("colz")
-	c.Update()
-	c.SaveAs("ROC_hist.pdf")
-	c.Clear()
-	diff_hist=roc_hist.Clone()
-	diff_hist.Add(roct_hist,-1)
-	diff_hist.SetTitle("Differenz ROC-ROCT")
-	#c.SetRightMargin(0.2)
-	c.Update()
-	diff_hist.Draw("col")
-	c.Update()
-	c.Clear()
-	diff_hist.Draw("colz")
-	c.Update()
-	c.SaveAs("ROC_hist.pdf")
-	c.Clear()
-	c.Update()
-	c.Clear()
-	ratio_hist.Draw("colz")
-	c.Update()
-	c.SaveAs("ROC_hist.pdf)")
-	c.Clear()
-	  
-	#outstr="bestes NTrees=" + str(best_NT) + "beste Shrinkage=" + str(best_Sh) + "beste nCuts=" + str(best_nC)+"\n"+str(nt1)+"      "+str(nt2)+"   "+str(sh1)+"         "+str(sh2)+"   "+str(nc1)+"       "+str(nc2)+"\n"
-        #logfile = open("bestlog_roc.txt","a+")
-        #logfile.write('######'+str(localtime())+'#####'+"\n"+"\n"+"\n"+str(self.best_variables)+"\n"+"\n"+str(self.bdtoptions)+"\n"+"\n"+outstr+'###############################################\n\n\n\n\n')
-        #logfile.close()
-	
-	#print "bestes NTrees=", best_NT, "beste Shrinkage=", best_Sh,"beste nCuts=", best_nC	
-	#return nt1,nt2,sh1,sh2,nc1,nc2
+            time = self.trainBDT([],"")
+	      #self.testBDT([],"")
+	    ROC, ksS, ksB, ROCT = self.evaluateLastTraining()
+            roc_hist.SetBinContent(k+1,i+1,ROC)
+	    roct_hist.SetBinContent(k+1,i+1,ROCT)
+	    ratio_hist.SetBinContent(k+1,i+1,(ROC/ROCT))
+	    timelist.append(time)
+	    ROClist.append(ROC)
+	    KSSlist.append(ksS)
+	    KSBlist.append(ksB)
+	    OPTlist.append(self.bdtoptions)
+
+        dt=datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
+        resultfile='TMVA_resultfile_'+dt+'.csv'
+        results = open(resultfile, "a+")
+        for i in range(len(timelist)):
+            results.write(str(timelist[i])+',best AMS = ,'+str(self.bookbetterReader())+','+str(ROClist[i])+','+str(KSSlist[i])+','+str(KSBlist[i])+','+str(OPTlist[i])+'\n')
+        results.close()    
+
        
     def ams(x, y, w, cut):
     # Calculate Average Mean Significane as defined in ATLAS paper
@@ -552,3 +465,62 @@ class Trainer:
 	#minout=0
 	
 	
+    def bookbetterReader(self):
+      feature_file = ROOT.TFile(self.treepath, 'read')
+      feature_tree = feature_file.Get("validation")
+      tmva_reader = ROOT.TMVA.Reader("!Color:!Silent")
+      
+      feature_values = []
+      for variable in self.best_variables:
+	feature_values.append(array( 'f',  [0.]))
+	feature_tree.SetBranchAddress(variable,  feature_values[-1])
+	tmva_reader.AddVariable(variable, feature_values[-1])
+      
+      label_value = array( 'c',  ['x'])
+      weight_value = array( 'f',  [0.0])
+      
+      feature_tree.SetBranchAddress('Label',  label_value)
+      feature_tree.SetBranchAddress('Weight',  weight_value)
+      
+      tmva_reader.BookMVA( "BDTG", self.trainedweight)
+      
+      result = np.zeros((feature_tree.GetEntries(), 3))
+      
+      for ievt in range(feature_tree.GetEntries()):
+	feature_tree.GetEntry(ievt)
+	result[ievt, 0] = int(label_value[0] == 's')
+	result[ievt, 1] = weight_value[0]
+	result[ievt, 2]    = tmva_reader.EvaluateMVA('BDTG')
+	
+      best_ams, vec = self.find_best_ams(result[:,0],result[:,2],result[:,1])
+      print best_ams
+      return best_ams
+      
+	
+    def ams(self, x, y, w, cut):
+    # Calculate Average Mean Significane as defined in ATLAS paper
+    #    -  approximative formula for large statistics with regularisation
+    # x: array of truth values (1 if signal)
+    # y: array of classifier result
+    # w: array of event weights
+    # cut
+        t = y > cut 
+        s = np.sum((x[t] == 1)*w[t])
+        b = np.sum((x[t] == 0)*w[t])
+        return s/np.sqrt(b+10.0)
+	
+    def find_best_ams(self, x, y, w):
+    # find best value of AMS by scanning cut values; 
+    # x: array of truth values (1 if signal)
+    # y: array of classifier results
+    # w: array of event weights
+    #  returns 
+    #   ntuple of best value of AMS and the corresponding cut value
+    #   list with corresponding pairs (ams, cut) 
+    # ----------------------------------------------------------
+        ymin=min(y) # classifiers may not be in range [0.,1.]
+        ymax=max(y)
+        nprobe=200    # number of (equally spaced) scan points to probe classifier 
+        amsvec= [(self.ams(x, y, w, cut), cut) for cut in np.linspace(ymin, ymax, nprobe)] 
+        maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
+        return maxams, amsvec      
