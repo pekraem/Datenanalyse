@@ -65,20 +65,25 @@ trainer.setVerbose(True) # no output during BDT training and testing
 trainer.setWeightExpression('Weight')
 
 #set BDT options
-trainer.setBDTOption("NTrees=1000")
+trainer.setBDTOption("NTrees=10")
 trainer.setBDTOption("Shrinkage=0.01")
 trainer.setBDTOption("nCuts=50")
 trainer.setBDTOption("MaxDepth=2")
 
 print trainer.best_variables
-#trainer.trainBDT(variables)
-#ROC, ksS, ksB, ROCT = trainer.evaluateLastTraining()
-
-#print ROC, ROCT, ksS, ksB
+trainer.trainBDT(variables)
+ROC, ksS, ksB, ROCT = trainer.evaluateLastTraining()
+trainer.SetPlotFile()
+trainer.SetLogFile()
+trainer.OpenPDF()
+print ROC, ROCT, ksS, ksB
 
 #trainer.bookbetterReader()
+trainer.return_ams()
+#trainer.testBDT(variables)
+#trainer.plotVarHistos()
 
-trainer.suche(1500, 2500, 0.001, 0.01, 5)#variates nTrees between 1500-2500 and shrinkage between 0.001-0.01 in 5 steps
+#trainer.suche(2000, 5000, 0.001, 0.01, 10)#variates nTrees between 1500-2500 and shrinkage between 0.001-0.01 in 5 steps
 
 print trainer.bdtoptions
 print trainer.factoryoptions

@@ -40,6 +40,7 @@ class Trainer:
         self.signal_prediction=[]
         self.background_prediction=[]
         self.treepath="../../atlas-higgs-challenge-2014-v2.root"
+        self.reader=ROOT.TMVA.Reader()
 
     def setVerbose(self,v=True):
         self.verbose=v
@@ -159,6 +160,7 @@ class Trainer:
         movedfile=movedfile.replace('.root','_'+dt+'.root')
         #call(['cp',self.rootfile,movedfile])
         self.trainedweight=weightfile
+        self.bookbetterReader()
 
     def evaluateLastTraining(self):
         f = ROOT.TFile(self.outpath+self.rootfile)
@@ -194,7 +196,7 @@ class Trainer:
         
         outstr='ROC='+str(rocintegral)+'   ROC_tr='+str(rocintegral_training)+'   ksS='+str(ksS)+'   ksB'+str(ksB)+"\n"
         logfile = open("log_roc.txt","a+")
-        logfile.write('######'+str(localtime())+'#####'+"\n"+"\n"+"\n"+'best AMS = ,'+str(self.bookbetterReader())+"\n"+str(self.best_variables)+"\n"+"\n"+str(self.bdtoptions)+"\n"+"\n"+outstr+'###############################################\n\n\n\n\n')
+        logfile.write('######'+str(localtime())+'#####'+"\n"+"\n"+"\n"+'best AMS = ,'+str(self.return_ams())+"\n"+str(self.best_variables)+"\n"+"\n"+str(self.bdtoptions)+"\n"+"\n"+outstr+'###############################################\n\n\n\n\n')
         logfile.close()
 
 
@@ -343,7 +345,7 @@ class Trainer:
         resultfile='TMVA_resultfile_'+dt+'.csv'
         results = open(resultfile, "a+")
         for i in range(len(timelist)):
-            results.write(str(timelist[i])+',best AMS = ,'+str(self.bookbetterReader())+','+str(ROClist[i])+','+str(KSSlist[i])+','+str(KSBlist[i])+','+str(OPTlist[i])+'\n')
+            results.write(str(timelist[i])+',best AMS = ,'+str(self.return_ams())+','+str(ROClist[i])+','+str(KSSlist[i])+','+str(KSBlist[i])+','+str(OPTlist[i])+'\n')
         results.close()    
 
        
@@ -484,14 +486,28 @@ class Trainer:
       feature_tree.SetBranchAddress('Weight',  weight_value)
       
       tmva_reader.BookMVA( "BDTG", self.trainedweight)
+      self.reader=tmva_reader
       
+    def prepare_tree(self):
+      label_value = array( 'c',  ['x'])
+      weight_value = array( 'f',  [0.0])
+      feature_tree.SetBranchAddress('Label',  label_value)
+      feature_tree.SetBranchAddress('Weight',  weight_value)
+      feature_values = []
+      for variable in self.best_variables:
+	feature_values.append(array( 'f',  [0.]))
+	feature_tree.SetBranchAddress(variable,  feature_values[-1])
+      
+    def  return_ams(self):
+      feature_file = ROOT.TFile(self.treepath, 'read')
+      feature_tree = feature_file.Get("validation")
       result = np.zeros((feature_tree.GetEntries(), 3))
-      
+      self.prepare_tree()
       for ievt in range(feature_tree.GetEntries()):
 	feature_tree.GetEntry(ievt)
 	result[ievt, 0] = int(label_value[0] == 's')
 	result[ievt, 1] = weight_value[0]
-	result[ievt, 2]    = tmva_reader.EvaluateMVA('BDTG')
+	result[ievt, 2] = self.reader.EvaluateMVA('BDTG')
 	
       best_ams, vec = self.find_best_ams(result[:,0],result[:,2],result[:,1])
       print best_ams
@@ -549,3 +565,178 @@ class Trainer:
         maxams=sorted(amsvec, key=lambda lst: lst[0] )[-1]
 
         return maxams, amsvec      
+    
+
+    def PrintCanvases(self):
+
+	pdffile=self.pdffile
+        dt=datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
+        pdf=pdffile.replace('.pdf','_'+dt+'.pdf')
+
+	c=ROOT.TCanvas("c","c",800,600)
+	c.Print(pdf+"[")
+	for can in self.PlotSaver:
+		can.Print(pdf)
+		print can
+	c.Print(pdf+"]")
+	
+	
+    def PlotOPTs(self, c):
+	t = ROOT.TLatex()
+	t.SetTextFont(43)
+	p = c.GetPad(0)
+	p.Update()
+	pad_width  = p.GetX2()-p.GetX1()
+	pad_height = p.GetY2()-p.GetY1()
+	t.SetTextSize(20)
+        #tcms = ROOT.TLatex()
+	#tcms.SetTextFont(43)
+	#tcms.SetTextSize(25)
+	X = p.GetUxmin()-0.09*pad_width 
+	Y = c.GetUymax() + 0.03*pad_height
+	y2 = c.GetUymax() + 0.07*pad_height
+	s = self.bdtoptions.split(":")
+	t.DrawLatex(X,Y,str(s[2])+'   '+str(s[5])+'   '+str(s[8])+'   '+str(s[9]))
+	
+	
+    def PreparePlot(self):
+	c = ROOT.TCanvas('c','c',800,800)
+	c.SetTopMargin(0.2)
+	c.SetTitle("CMS private work")
+	t = ROOT.TLatex()
+	t.SetTextFont(43)
+	t.SetTextSize(10)
+	tcms = ROOT.TLatex()
+	tcms.SetTextFont(43)
+	tcms.SetTextSize(30)
+	X=c.GetUxmin()
+	Y=c.GetUymax() - 0.05 #* pad_height
+	t.DrawLatex(X,Y,"#splitline{"+str(self.best_variables)+"}{"+str(self.bdtoptions)+"}")
+	tcms.DrawLatex(X,Y+0.15,"CMS private work")
+	return c, t
+
+    def FinishPlot(self,c):
+	c.Update()
+	c.Print(self.PlotFile)
+	c.Close()
+	
+	
+    def PrintOutput(self,variables_=[],bdtoptions_="",factoryoptions_=""):
+      	ROOT.gStyle.SetOptStat(0)	#no legends in plots
+	c1, t = self.PreparePlot()
+	#self.PlotSaver.append(ROOT.TCanvas('c'+str(len(self.PlotSaver)),'c'+str(len(self.PlotSaver)), 800, 600))
+        if not hasattr(self, 'signal_train') or not hasattr(self, 'signal_test') or not hasattr(self, 'background_train')  or not hasattr(self, 'background_test'):
+            print 'set training and test samples first'
+            return
+	c1.SetRightMargin(0.2)
+        newbdtoptions=replaceOptions(bdtoptions_,self.bdtoptions)
+        newoptions=replaceOptions(factoryoptions_,self.factoryoptions)
+        reader = ROOT.TMVA.Reader(newoptions)
+        # add variables	
+	varx = array('f',[0])
+	vary = array('f',[0])
+	localvar = [varx, vary]
+        variables=variables_
+        if len(variables)==0:
+            variables = self.best_variables
+        for i in range(len(variables)):
+	    #localvar.append(None)
+            reader.AddVariable(variables[i],localvar[i])
+        # add signal and background trees
+        print 'test'
+        print '########################## testBDT',self.signal_test.path
+        input_test_S = ROOT.TFile( self.signal_test.path )
+        input_test_B = ROOT.TFile( self.background_test.path )          
+        test_treeS = input_test_S.Get(self.Streename)
+        test_treeB = input_test_B.Get(self.Btreename)
+
+        reader.BookMVA( "BDTG", self.trainedweight)
+
+	mvaValue = reader.EvaluateMVA( "BDTG" )
+	#print mvaValue
+	varx[0] = -1
+	vary[0] = 1
+	we = reader.EvaluateMVA("BDTG")
+	#print we
+	# create a new 2D histogram with fine binning
+	histo2 = ROOT.TH2F("histo2","",200,-5,5,200,-5,5)
+	maxout=0
+	minout=0
+	 
+	# loop over the bins of a 2D histogram
+	for i in range(1,histo2.GetNbinsX() + 1):
+	    for j in range(1,histo2.GetNbinsY() + 1):
+         
+        	# find the bin center coordinates
+	        varx[0] = histo2.GetXaxis().GetBinCenter(i)
+	        vary[0] = histo2.GetYaxis().GetBinCenter(j)
+	         
+	        # calculate the value of the classifier
+	        # function at the given coordinate
+	        bdtOutput = reader.EvaluateMVA("BDTG")
+	        #print bdtOutput
+
+		#get min max of bdtOutput for bdtOutput-Shape Histo
+		if bdtOutput>maxout:
+			maxout=bdtOutput
+		if bdtOutput<minout:
+	         	minout=bdtOutput
+
+	        # set the bin content equal to the classifier output
+	        histo2.SetBinContent(i,j,bdtOutput)
+	 
+	#self.PlotSaver.append(ROOT.TCanvas())
+	#histo2.SetTitle("BDT prediction")
+	histo2.SetXTitle("Variable X")
+	histo2.SetYTitle("Variable Y")
+	#histo2.SetTitle("Entscheidungsbaum Klassifikation")
+	histo2.Draw("colz")
+	t.Draw("SAME")
+	self.PlotOPTs(c1)
+	self.PlotCMS(c1)
+	self.FinishPlot(c1)
+	c1.Close()
+	del c1	
+
+    def plotVarHistos(self):
+        for v in self.best_variables:
+            self.SetPlotFile()
+            c = self.PreparePlot()
+            hist_S = ROOT.TH1F("hist_S", "hist_S", 50, -3, 4)
+            hist_B = ROOT.TH1F("hist_B", "hist_B", 50, -3, 4)
+            input_train_S = ROOT.TFile( self.signal_train.path )
+            input_train_B = ROOT.TFile( self.background_train.path )          
+            train_treeS = input_train_S.Get(self.Streename)
+            train_treeB = input_train_B.Get(self.Btreename)
+            for evt in train_treeS:
+                hist_S.Fill(train_treeS.v)
+            for evt in train_treeB:
+                hist_B.Fill(train_treeB.v)
+            hist_S.setColor(self.signal_train.color)
+            hist_B.setColor(self.background_train.color)
+            hist_S.Draw()
+            hist_B.Draw("SAME")
+            self.PlotCMS(c)
+            self.FinishPlot(c)
+            c.Close()
+            del c
+            del hist_S
+            del hist_B	
+            
+    def SetPlotFile(self):
+        dt=datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
+	self.PlotFile='TMVA_PlotFile_'+dt+'.pdf'
+	
+    def SetLogFile(self):
+        dt=datetime.datetime.now().strftime("%Y_%m%d_%H%M%S")
+        self.logfile='TMVA_LogFile_'+dt+'.txt'
+
+    def OpenPDF(self):
+	c=ROOT.TCanvas('c','c',800,640)
+	c.Print(self.PlotFile+'[')
+	c.Close()
+
+    def ClosePDF(self):
+	c=ROOT.TCanvas('c','c',800,640)
+	c.Print(self.PlotFile+']')
+	c.Close()            
